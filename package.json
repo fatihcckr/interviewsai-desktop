@@ -1,0 +1,20 @@
+{
+  "name": "interviewsai-desktop",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "electron": "^38.2.2"
+  },
+  "dependencies": {
+    "@deepgram/sdk": "^4.11.2",
+    "electron-squirrel-startup": "^1.0.1"
+  }
+}
