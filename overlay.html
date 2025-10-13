@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>InterviewsAI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: rgba(26, 26, 26, 0.50);
+      color: white;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+  background: rgba(45, 45, 45, 0.5);
+  padding: 12px 16px 12px 0px; /* 8px → 0px */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #404040;
+  pointer-events: auto; 
+}
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0px;
+    }
+
+    .logo-image {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  pointer-events: auto;
+  flex-shrink: 0;
+  margin-right: 8px; /* Logo ile text arası 8px */
+}
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .logo {
+  font-weight: 700;
+  font-size: 14px;
+  pointer-events: auto;
+  -webkit-app-region: drag;
+  cursor: move;
+  padding: 0; /* 4px 8px → 0 (padding kaldır) */
+  white-space: nowrap;
+  margin-right: 12px; /* Text ile Hide arası boşluk */
+}
+
+    .header-right {
+      -webkit-app-region: no-drag;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .timer {
+      font-size: 13px;
+      color: white;
+      font-weight: 600;
+      pointer-events: auto;
+    }
+
+    .audio-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.audio-btn {
+  background: #404040;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.audio-btn:hover {
+  background: #4b5563;
+}
+
+.audio-icon {
+  display: flex;
+  align-items: center;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  display: none;
+  animation: pulse 2s infinite; /* ← BU SATIRI EKLE */
+}
+
+.audio-btn.enabled .status-indicator {
+  display: block;
+}
+
+    .end-session-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 50%;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 600;
+      pointer-events: auto;
+      -webkit-app-region: no-drag;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+    }
+
+    .end-session-btn:hover {
+      background: #dc2626;
+    }
+
+    .hide-btn {
+      background: #404040;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      pointer-events: auto; 
+      -webkit-app-region: no-drag;
+      position: relative;
+    }
+
+    .hide-btn:hover {
+      background: #4b5563;
+    }
+
+    .hide-btn:hover::after {
+      content: 'Ctrl+B';
+      position: absolute;
+      top: 100%;
+      margin-top: 4px;
+      right: 0;
+      background: #1f2937;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .listening-status {
+      background: rgba(37, 37, 37, 0.5);
+      padding: 10px 16px;
+      border-bottom: 1px solid #404040;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+
+    .listening-dot {
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .actions {
+      -webkit-app-region: no-drag;
+      padding: 12px 16px;
+      display: flex;
+      gap: 8px;
+      background: rgba(37, 37, 37, 0.5);
+      border-bottom: 1px solid #404040;
+    }
+
+    .action-btn {
+      flex: 1;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      pointer-events: auto;
+    }
+
+    .action-btn:hover {
+      background: #2563eb;
+    }
+
+    .action-btn.secondary {
+      background: #6b7280;
+    }
+
+    .action-btn.secondary:hover {
+      background: #4b5563;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      pointer-events: none;
+    }
+
+    .content::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .content::-webkit-scrollbar-thumb {
+      background: #404040;
+      border-radius: 4px;
+    }
+
+    .section {
+      background: rgba(37, 37, 37, 0.5);
+      border-radius: 10px;
+      padding: 14px;
+      border: 1px solid #404040;
+      pointer-events: auto;
+      display: none;
+    }
+
+    .section.visible {
+      display: block;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #9ca3af;
+    }
+
+    .section-content {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #e5e7eb;
+    }
+
+    .answer-content {
+      list-style: none;
+      padding: 0;
+    }
+
+    .answer-content li {
+      margin-bottom: 8px;
+      padding-left: 16px;
+      position: relative;
+    }
+
+    .answer-content li:before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #fbbf24;
+    }
+
+    .placeholder {
+      color: #6b7280;
+      font-style: italic;
+    }
+
+    /* Minimized state */
+    body.minimized .content,
+    body.minimized .actions,
+    body.minimized .listening-status {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+  <div class="header-left">
+    <img src="logo.png" class="logo-image" alt="InterviewsAI">
+    <span class="logo">Interviews AI</span>
+    <button class="hide-btn">Hide</button>
+  </div>
+  <div class="header-right">
+    <span class="timer" id="timer">00:00</span>
+    <div class="audio-controls">
+      <button class="audio-btn enabled" id="speakerBtn" title="Toggle Desktop Audio">
+        <span class="audio-icon">🖥️</span>
+        <span class="status-indicator"></span>
+      </button>
+      <button class="audio-btn enabled" id="micBtn" title="Toggle Microphone">
+        <span class="audio-icon">🎙️</span>
+        <span class="status-indicator"></span>
+      </button>
+    </div>
+    <button class="end-session-btn" title="End Session">
+      ✕
+    </button>
+  </div>
+</div>
+
+    <!-- Listening Status -->
+    <div class="listening-status">
+      <div class="listening-dot"></div>
+      <span>Listening...</span>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Question Section -->
+      <div class="section" id="questionSection">
+        <div class="section-header">
+          💬 Question
+        </div>
+        <div class="section-content" id="question">
+          <span class="placeholder">Processing...</span>
+        </div>
+      </div>
+
+      <!-- Answer Section -->
+      <div class="section" id="answerSection">
+        <div class="section-header">
+          ⭐ Answer
+        </div>
+        <div class="section-content" id="answer">
+          <ul class="answer-content">
+            <li class="placeholder">Generating...</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="action-btn" id="aiAnswerBtn">
+        ⚡ Generate Answer
+      </button>
+      <button class="action-btn secondary" id="analyzeScreenBtn">
+        📸 Analyze Screen
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Timer (MM:SS formatı)
+    let seconds = 0;
+    setInterval(() => {
+      seconds++;
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      document.getElementById('timer').textContent = `${m}:${s}`;
+    }, 1000);
+
+    // Buttons
+    document.getElementById('aiAnswerBtn').addEventListener('click', () => {
+      document.getElementById('questionSection').classList.add('visible');
+      document.getElementById('answerSection').classList.add('visible');
+      
+      document.getElementById('answer').innerHTML = '<span class="placeholder">Generating...</span>';
+      // TODO: Call Electron IPC
+    });
+
+    document.getElementById('analyzeScreenBtn').addEventListener('click', () => {
+      document.getElementById('questionSection').classList.add('visible');
+      document.getElementById('answerSection').classList.add('visible');
+      
+      document.getElementById('answer').innerHTML = '<span class="placeholder">Analyzing screen...</span>';
+      // TODO: Call Electron IPC
+    });
+
+    // End Session
+    document.querySelector('.end-session-btn').addEventListener('click', () => {
+      if (confirm('Are you sure you want to end this session?')) {
+        require('electron').ipcRenderer.send('end-session');
+      }
+    });
+
+    // Audio Controls
+    let speakerEnabled = true;
+    let micEnabled = true;
+
+    document.getElementById('speakerBtn').addEventListener('click', () => {
+      speakerEnabled = !speakerEnabled;
+      const btn = document.getElementById('speakerBtn');
+      
+      if (speakerEnabled) {
+        btn.classList.add('enabled');
+      } else {
+        btn.classList.remove('enabled');
+      }
+      
+      console.log('Speaker:', speakerEnabled ? 'ON' : 'OFF');
+      // TODO: Call Electron IPC
+    });
+
+    document.getElementById('micBtn').addEventListener('click', () => {
+      micEnabled = !micEnabled;
+      const btn = document.getElementById('micBtn');
+      
+      if (micEnabled) {
+        btn.classList.add('enabled');
+      } else {
+        btn.classList.remove('enabled');
+      }
+      
+      console.log('Microphone:', micEnabled ? 'ON' : 'OFF');
+      // TODO: Call Electron IPC
+    });
+
+    console.log('InterviewsAI Overlay loaded');
+
+    // Hide button
+    document.querySelector('.hide-btn').addEventListener('click', () => {
+      console.log('Hide button clicked');
+      require('electron').ipcRenderer.send('hide-overlay');
+    });
+
+    // Ctrl+B kısayolu
+    require('electron').ipcRenderer.on('toggle-hide', () => {
+      console.log('Ctrl+B pressed - toggling hide');
+      require('electron').ipcRenderer.send('hide-overlay');
+    });
+
+    // Listen for minimize toggle
+    require('electron').ipcRenderer.on('toggle-minimize', (event, isMinimized) => {
+      if (isMinimized) {
+        document.body.classList.add('minimized');
+        document.querySelector('.hide-btn').textContent = 'Show';
+      } else {
+        document.body.classList.remove('minimized');
+        document.querySelector('.hide-btn').textContent = 'Hide';
+      }
+    });
+
+    // Mouse event handling
+    document.addEventListener('mousemove', (e) => {
+      const isOverInteractive = e.target.closest('button, .section, .header, .listening-status');
+      
+      try {
+        if (isOverInteractive) {
+          require('electron').ipcRenderer.send('set-ignore-mouse-events', false);
+        } else {
+          require('electron').ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
+        }
+      } catch (err) {
+        console.error('Mouse event error:', err);
+      }
+    });
+  </script>
+</body>
+</html>

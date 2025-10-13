@@ -1,9 +1,10 @@
-const { app, BrowserWindow, protocol } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
 const path = require('path');
 
 let mainWindow;
+let overlayWindow;
 
-// Deep link protocol'ünü kaydet
+// Deep link protocol
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
     app.setAsDefaultProtocolClient('interviewsai', process.execPath, [path.resolve(process.argv[1])]);
@@ -12,58 +13,136 @@ if (process.defaultApp) {
   app.setAsDefaultProtocolClient('interviewsai');
 }
 
-function createWindow(deepLinkUrl = null) {
+function createMainWindow(deepLinkUrl = null) {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
       contextIsolation: false
     }
   });
 
-  // Web app'i yükle
   mainWindow.loadURL('http://localhost:5173');
-  
-  // DevTools'u aç
   mainWindow.webContents.openDevTools();
 
-  // Deep link varsa işle
   if (deepLinkUrl) {
     handleDeepLink(deepLinkUrl);
   }
 }
 
+function createOverlayWindow() {
+  overlayWindow = new BrowserWindow({
+    width: 400,
+    height: 600,
+    transparent: true,
+    frame: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+  overlayWindow.loadFile('overlay.html');
+  
+  // Screen capture'dan gizle (Windows)
+  if (process.platform === 'win32') {
+    overlayWindow.setContentProtection(true);
+  }
+
+  // ← BU SATIRI EKLE (setContentProtection'dan SONRA)
+  overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+
+  overlayWindow.once('ready-to-show', () => {
+  const display = require('electron').screen.getPrimaryDisplay();
+  const { width: screenWidth } = display.workArea;
+  overlayWindow.setPosition(Math.floor(screenWidth / 2) - 200, 1); // 60px → 40px
+});
+}
+
 function handleDeepLink(url) {
   console.log('Deep link received:', url);
   
-  // URL'den session ID'yi çıkar: interviewsai://session/abc123
   const match = url.match(/interviewsai:\/\/session\/(.+)/);
-  if (match && mainWindow) {
+  if (match) {
     const sessionId = match[1];
     
-    // Web app'e session ID'yi gönder - DOM fully loaded olana kadar bekle
+    // Overlay window'u aç
+    if (!overlayWindow) {
+      createOverlayWindow();
+    }
+    
     const sendSessionId = () => {
-      mainWindow.webContents.executeJavaScript(`
-        console.log('Session ID received from deep link:', '${sessionId}');
-        window.electronSessionId = '${sessionId}';
-        window.dispatchEvent(new CustomEvent('electron-deep-link', { detail: { sessionId: '${sessionId}' } }));
-      `);
+      if (overlayWindow) {
+        overlayWindow.webContents.executeJavaScript(`
+          console.log('Session ID:', '${sessionId}');
+          window.electronSessionId = '${sessionId}';
+        `);
+      }
     };
 
-    // Eğer sayfa zaten yüklüyse hemen gönder
-    if (mainWindow.webContents.getURL().includes('localhost')) {
-      setTimeout(sendSessionId, 1000); // 1 saniye bekle
+    if (overlayWindow.webContents.getURL().includes('localhost')) {
+      setTimeout(sendSessionId, 1000);
     } else {
-      // Sayfa henüz yüklenmediyse bekle
-      mainWindow.webContents.once('did-finish-load', () => {
-        setTimeout(sendSessionId, 1000); // 1 saniye bekle
+      overlayWindow.webContents.once('did-finish-load', () => {
+        setTimeout(sendSessionId, 1000);
       });
     }
   }
 }
 
-// Windows için deep link
+// Mouse events IPC
+ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
+  if (overlayWindow) {
+    overlayWindow.setIgnoreMouseEvents(ignore, options);
+  }
+});
+
+// Hide overlay IPC
+let isMinimized = false;
+let savedSize = { width: 400, height: 600 };
+let savedPosition = { x: 0, y: 0 }; // Kaydedilen pozisyon
+
+ipcMain.on('hide-overlay', () => {
+  if (overlayWindow) {
+    if (isMinimized) {
+      // Restore - KAYDEDİLEN boyut ve pozisyona dön
+      overlayWindow.setSize(savedSize.width, savedSize.height);
+      overlayWindow.setPosition(savedPosition.x, savedPosition.y);
+      isMinimized = false;
+    } else {
+      // Minimize - MEVCUT boyut ve pozisyonu kaydet
+      const [currentWidth, currentHeight] = overlayWindow.getSize();
+      const [currentX, currentY] = overlayWindow.getPosition();
+      
+      savedSize = { width: currentWidth, height: currentHeight };
+      savedPosition = { x: currentX, y: currentY };
+      
+      // Sadece yüksekliği değiştir, genişlik ve pozisyon aynı kalsın
+      overlayWindow.setSize(currentWidth, 50);
+      // Pozisyonu değiştirme!
+      
+      isMinimized = true;
+    }
+    
+    // Overlay'e durumu bildir
+    overlayWindow.webContents.send('toggle-minimize', isMinimized);
+  }
+});
+
+// End session IPC
+ipcMain.on('end-session', () => {
+  if (overlayWindow) {
+    overlayWindow.close();
+  }
+});
+
+// Windows deep link
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
@@ -74,7 +153,6 @@ if (!gotTheLock) {
       mainWindow.focus();
     }
     
-    // Windows'ta deep link URL komut satırında gelir
     const url = commandLine.find(arg => arg.startsWith('interviewsai://'));
     if (url) {
       handleDeepLink(url);
@@ -83,25 +161,23 @@ if (!gotTheLock) {
 }
 
 app.whenReady().then(() => {
-  // Uygulama başlatılırken deep link kontrolü
   const url = process.argv.find(arg => arg.startsWith('interviewsai://'));
-  createWindow(url);
+  createMainWindow(url);
+
+  // Keyboard shortcuts
+  registerShortcuts();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      createMainWindow();
     }
   });
 });
 
-// macOS için deep link
+// macOS deep link
 app.on('open-url', (event, url) => {
   event.preventDefault();
-  if (mainWindow) {
-    handleDeepLink(url);
-  } else {
-    createWindow(url);
-  }
+  handleDeepLink(url);
 });
 
 app.on('window-all-closed', () => {
@@ -109,3 +185,56 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+
+function registerShortcuts() {
+  // Ctrl+H: Generate AI response
+  globalShortcut.register('CommandOrControl+H', () => {
+    console.log('Ctrl+H pressed');
+    if (overlayWindow) {
+      overlayWindow.webContents.send('generate-response');
+    }
+  });
+
+  // Ctrl+K: Analyze screen
+  globalShortcut.register('CommandOrControl+K', () => {
+    console.log('Ctrl+K pressed');
+    if (overlayWindow) {
+      overlayWindow.webContents.send('analyze-screen');
+    }
+  });
+
+  // Ctrl+B: Toggle hide/show ← BU SATIRI EKLE
+  globalShortcut.register('CommandOrControl+B', () => {
+    console.log('Ctrl+B pressed');
+    if (overlayWindow) {
+      overlayWindow.webContents.send('toggle-hide');
+    }
+  });
+
+  // Arrow keys to move overlay
+  globalShortcut.register('CommandOrControl+Left', () => moveOverlay(-50, 0));
+  globalShortcut.register('CommandOrControl+Right', () => moveOverlay(50, 0));
+  globalShortcut.register('CommandOrControl+Up', () => moveOverlay(0, -50));
+  globalShortcut.register('CommandOrControl+Down', () => moveOverlay(0, 50));
+}
+
+function moveOverlay(x, y) {
+  if (overlayWindow) {
+    const [currentX, currentY] = overlayWindow.getPosition();
+    const [width, height] = overlayWindow.getSize();
+    const display = require('electron').screen.getPrimaryDisplay();
+    const { width: screenWidth, height: screenHeight } = display.workArea;
+    
+    // Yeni pozisyonu hesapla
+    let newX = currentX + x;
+    let newY = currentY + y;
+    
+    // Ekran sınırlarını kontrol et
+    if (newX < 0) newX = 0;
+    if (newY < 0) newY = 0;
+    if (newX + width > screenWidth) newX = screenWidth - width;
+    if (newY + height > screenHeight) newY = screenHeight - height;
+    
+    overlayWindow.setPosition(newX, newY);
+  }
+}
