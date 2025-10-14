@@ -111,26 +111,23 @@ let savedPosition = { x: 0, y: 0 }; // Kaydedilen pozisyon
 ipcMain.on('hide-overlay', () => {
   if (overlayWindow) {
     if (isMinimized) {
-      // Restore - KAYDEDİLEN boyut ve pozisyona dön
+      // Restore
       overlayWindow.setSize(savedSize.width, savedSize.height);
       overlayWindow.setPosition(savedPosition.x, savedPosition.y);
       isMinimized = false;
     } else {
-      // Minimize - MEVCUT boyut ve pozisyonu kaydet
+      // Minimize
       const [currentWidth, currentHeight] = overlayWindow.getSize();
       const [currentX, currentY] = overlayWindow.getPosition();
       
       savedSize = { width: currentWidth, height: currentHeight };
       savedPosition = { x: currentX, y: currentY };
       
-      // Sadece yüksekliği değiştir, genişlik ve pozisyon aynı kalsın
-      overlayWindow.setSize(currentWidth, 50);
-      // Pozisyonu değiştirme!
+      overlayWindow.setSize(currentWidth, 64); // 50 → 64 (header'ın tam yüksekliği)
       
       isMinimized = true;
     }
     
-    // Overlay'e durumu bildir
     overlayWindow.webContents.send('toggle-minimize', isMinimized);
   }
 });

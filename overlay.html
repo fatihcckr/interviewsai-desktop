@@ -27,7 +27,7 @@
 
     .header {
   background: rgba(45, 45, 45, 0.5);
-  padding: 12px 16px 12px 0px; /* 8px → 0px */
+  padding: 8px 16px 8px 0px; /* 12px → 8px (üst-alt padding azalt) */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -42,12 +42,13 @@
     }
 
     .logo-image {
-  width: 32px; /* 28px → 32px */
-  height: 32px; /* 28px → 32px */
+  width: 48px; 
+  height: 48px; 
   border-radius: 6px;
   pointer-events: auto;
   flex-shrink: 0;
-  margin-right: 6px; /* 8px → 6px (text'e yaklaştır) */
+  margin-right: 0px;
+  margin-top: 2px; /* ← YENİ: logo'yu 2px aşağı kaydır */
 }
 
     .status-dot {
@@ -70,10 +71,11 @@
   -webkit-app-region: drag;
   cursor: move;
   padding: 0;
+  padding-left: 0px; /* 6px → 0px */
+  margin-left: -8px; /* ← YENİ: eksi margin ile logonun içine sok */
   white-space: nowrap;
-  margin-right: 8px; /* 12px → 8px (Hide'a yaklaştır) */
+  margin-right: 4px;
 }
-
     .header-right {
       -webkit-app-region: no-drag;
       display: flex;
@@ -157,7 +159,7 @@
       background: #404040;
       color: white;
       border: none;
-      padding: 6px 12px;
+      padding: 3px 6px;
       border-radius: 6px;
       font-size: 12px;
       cursor: pointer;
@@ -172,19 +174,19 @@
     }
 
     .hide-btn:hover::after {
-      content: 'Ctrl+B';
-      position: absolute;
-      top: 100%;
-      margin-top: 4px;
-      right: 0;
-      background: #1f2937;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      white-space: nowrap;
-      pointer-events: none;
-      z-index: 1000;
-    }
+  content: 'Ctrl+B';
+  position: absolute;
+  top: 100%;
+  margin-top: 4px;
+  right: -4px; /* 0 → -4px (biraz sağa kaydır) */
+  background: #1f2937;
+  padding: 4px 10px; /* 4px 8px → 4px 10px */
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1000;
+}
 
     .listening-status {
       background: rgba(37, 37, 37, 0.5);
