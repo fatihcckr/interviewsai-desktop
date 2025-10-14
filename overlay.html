@@ -325,6 +325,66 @@
     body.minimized .listening-status {
       display: none;
     }
+
+    .manual-input {
+  -webkit-app-region: no-drag;
+  padding: 8px 16px;
+  display: flex;
+  gap: 8px;
+  background: rgba(37, 37, 37, 0.5);
+  border-bottom: 1px solid #404040;
+  align-items: center;
+}
+
+.message-input {
+  flex: 1;
+  background: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: white;
+  font-size: 13px;
+  pointer-events: auto;
+  font-family: inherit;
+}
+
+.message-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.message-input::placeholder {
+  color: #6b7280;
+}
+
+.send-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+  white-space: nowrap;
+}
+
+.send-btn:hover {
+  background: #2563eb;
+}
+
+.send-btn:disabled {
+  background: #4b5563;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Minimized state - input'u da gizle */
+body.minimized .manual-input {
+  display: none;
+}
   </style>
 </head>
 <body>
@@ -396,6 +456,20 @@
         </div>
       </div>
     </div>
+
+    <!-- Manual Message Input -->
+    <div class="manual-input">
+  <input 
+    type="text" 
+    id="manualMessage" 
+    placeholder="Type your message here..."
+    class="message-input"
+  />
+  <button class="send-btn" id="sendBtn" disabled>
+    Send
+  </button>
+</div>
+
 
     <!-- Actions -->
     <div class="actions">
@@ -513,6 +587,28 @@
         console.error('Mouse event error:', err);
       }
     });
+
+    // Manual message input handler
+const messageInput = document.getElementById('manualMessage');
+const sendBtn = document.getElementById('sendBtn');
+
+messageInput.addEventListener('input', () => {
+  if (messageInput.value.trim().length > 0) {
+    sendBtn.disabled = false;
+  } else {
+    sendBtn.disabled = true;
+  }
+});
+
+sendBtn.addEventListener('click', () => {
+  const message = messageInput.value.trim();
+  if (message) {
+    console.log('Manual message:', message);
+    // TODO: Send message via IPC
+    messageInput.value = '';
+    sendBtn.disabled = true;
+  }
+});
   </script>
 </body>
 </html>
