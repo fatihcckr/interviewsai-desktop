@@ -50,6 +50,9 @@ function createOverlayWindow() {
 
   overlayWindow.loadFile('overlay.html');
   
+  // ← BU SATIRI EKLE
+  overlayWindow.webContents.openDevTools();
+  
   // Screen capture'dan gizle (Windows)
   if (process.platform === 'win32') {
     overlayWindow.setContentProtection(true);
@@ -136,6 +139,46 @@ ipcMain.on('hide-overlay', () => {
 ipcMain.on('end-session', () => {
   if (overlayWindow) {
     overlayWindow.close();
+  }
+});
+
+// Start listening IPC
+ipcMain.on('start-listening', async (event, language) => {
+  console.log('Starting listening with language:', language);
+  
+  try {
+    // Backend'den Deepgram token al
+    const API_URL = 'http://localhost:5000/api'; // Production'da değiştir
+    const response = await fetch(`${API_URL}/deepgram-token`, { method: 'POST' });
+    
+    if (!response.ok) {
+      throw new Error('Failed to get Deepgram token');
+    }
+    
+    const tokenData = await response.json();
+    
+    // Token'ı overlay'e gönder
+    if (overlayWindow) {
+      overlayWindow.webContents.send('deepgram-token', {
+        token: tokenData.key,
+        language: language || 'en-US'
+      });
+    }
+    
+  } catch (error) {
+    console.error('Failed to get token:', error);
+    if (overlayWindow) {
+      overlayWindow.webContents.send('listening-error', error.message);
+    }
+  }
+});
+
+// Stop listening IPC
+ipcMain.on('stop-listening', (event) => {
+  console.log('Stopping listening...');
+  
+  if (overlayWindow) {
+    overlayWindow.webContents.send('stop-audio-capture');
   }
 });
 

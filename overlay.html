@@ -462,7 +462,7 @@ body.minimized .manual-input {
   <input 
     type="text" 
     id="manualMessage" 
-    placeholder="Type your message here..."
+    placeholder="Type manual message here..."
     class="message-input"
   />
   <button class="send-btn" id="sendBtn" disabled>
@@ -550,6 +550,21 @@ body.minimized .manual-input {
 
     console.log('InterviewsAI Overlay loaded');
 
+    // Auto-start listening when overlay loads
+window.addEventListener('DOMContentLoaded', () => {
+  console.log('Auto-starting listening...');
+  
+  // Ensure both audio sources are enabled
+  speakerEnabled = true;
+  micEnabled = true;
+  
+  document.getElementById('speakerBtn').classList.add('enabled');
+  document.getElementById('micBtn').classList.add('enabled');
+  
+  // Start listening (TODO: trigger actual audio capture)
+  require('electron').ipcRenderer.send('start-listening');
+});
+
     // Hide button
     document.querySelector('.hide-btn').addEventListener('click', () => {
       console.log('Hide button clicked');
@@ -609,6 +624,243 @@ sendBtn.addEventListener('click', () => {
     sendBtn.disabled = true;
   }
 });
+
+
+// Deepgram transcript updates
+require('electron').ipcRenderer.on('transcript-update', (event, data) => {
+  console.log('Transcript update:', data.text, 'isFinal:', data.isFinal);
+  
+  // Question section'ı göster
+  document.getElementById('questionSection').classList.add('visible');
+  
+  // Transcript'i question section'a yaz
+  const questionDiv = document.getElementById('question');
+  if (data.isFinal) {
+    // Final transcript - kalın yazı
+    questionDiv.innerHTML = `<strong>${data.text}</strong>`;
+  } else {
+    // Interim transcript - normal yazı
+    questionDiv.innerHTML = `<span class="text-gray-400">${data.text}</span>`;
+  }
+});
+
+// Listening started event
+require('electron').ipcRenderer.on('listening-started', () => {
+  console.log('✅ Listening started successfully');
+});
+
+// Listening stopped event
+require('electron').ipcRenderer.on('listening-stopped', () => {
+  console.log('⏹️ Listening stopped');
+});
+
+// Listening error event
+require('electron').ipcRenderer.on('listening-error', (event, errorMessage) => {
+  console.error('❌ Listening error:', errorMessage);
+  alert('Listening error: ' + errorMessage);
+});
+
+
+// ===== AUDIO CAPTURE IN RENDERER PROCESS =====
+const { desktopCapturer } = require('electron');
+const { createClient, LiveTranscriptionEvents } = require('@deepgram/sdk');
+
+let deepgramConnection = null;
+let microphoneStream = null;
+let systemAudioStream = null;
+let microphoneRecorder = null;
+let systemAudioRecorder = null;
+let isCapturing = false;
+
+// Token geldiğinde audio capture'ı başlat
+require('electron').ipcRenderer.on('deepgram-token', async (event, data) => {
+  console.log('🔑 Received Deepgram token, starting audio capture...');
+  
+  try {
+    // Deepgram bağlantısını kur
+    const deepgram = createClient(data.token);
+    deepgramConnection = deepgram.listen.live({
+      model: 'nova-2',
+      language: data.language,
+      smart_format: true,
+      interim_results: true,
+    });
+
+    // Deepgram event listeners
+    deepgramConnection.on(LiveTranscriptionEvents.Open, () => {
+      console.log('✅ Deepgram connection opened');
+      isCapturing = true;
+    });
+
+    deepgramConnection.on(LiveTranscriptionEvents.Transcript, (transcriptData) => {
+  const transcriptText = transcriptData.channel.alternatives[0].transcript;
+  if (transcriptText) {
+    // "Listening..." yazan yeri bul
+    const listeningStatus = document.querySelector('.listening-status span');
+    
+    if (transcriptData.is_final) {
+      // Final transcript - kalın yazı
+      listeningStatus.innerHTML = `<strong>${transcriptText}</strong>`;
+    } else {
+      // Interim transcript - normal yazı (gri)
+      listeningStatus.innerHTML = `<span style="color: #9ca3af;">${transcriptText}</span>`;
+    }
+  }
+});
+
+    deepgramConnection.on(LiveTranscriptionEvents.Error, (err) => {
+      console.error('❌ Deepgram error:', err);
+      alert('Deepgram error: ' + err.message);
+    });
+
+    deepgramConnection.on(LiveTranscriptionEvents.Close, () => {
+      console.log('🔌 Deepgram connection closed');
+      isCapturing = false;
+    });
+
+    // Microphone capture başlat
+    await startMicrophone();
+
+    // System audio capture başlat
+    await startSystemAudio();
+
+    console.log('🎙️ Audio capture started successfully');
+
+  } catch (error) {
+    console.error('Failed to start audio capture:', error);
+    alert('Failed to start audio: ' + error.message);
+  }
+});
+
+// Stop audio capture
+require('electron').ipcRenderer.on('stop-audio-capture', () => {
+  console.log('⏹️ Stopping audio capture...');
+  stopAudioCapture();
+});
+
+async function startMicrophone() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      } 
+    });
+    
+    microphoneStream = stream;
+    
+    const mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'audio/webm'
+    });
+    
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0 && deepgramConnection && deepgramConnection.getReadyState() === 1) {
+        deepgramConnection.send(event.data);
+      }
+    };
+    
+    mediaRecorder.start(250);
+    microphoneRecorder = mediaRecorder;
+    
+    console.log('✅ Microphone capture started');
+  } catch (error) {
+    console.error('Failed to start microphone:', error);
+    throw error;
+  }
+}
+
+async function startSystemAudio() {
+  try {
+    const sources = await desktopCapturer.getSources({
+      types: ['screen'],
+      thumbnailSize: { width: 1, height: 1 }
+    });
+    
+    if (sources.length === 0) {
+      console.log('⚠️ No screen sources found for system audio');
+      return;
+    }
+    
+    const primarySource = sources[0];
+    
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        mandatory: {
+          chromeMediaSource: 'desktop',
+          chromeMediaSourceId: primarySource.id
+        }
+      },
+      video: {
+        mandatory: {
+          chromeMediaSource: 'desktop',
+          chromeMediaSourceId: primarySource.id,
+          maxWidth: 1,
+          maxHeight: 1
+        }
+      }
+    });
+    
+    const audioTrack = stream.getAudioTracks()[0];
+    if (audioTrack) {
+      const audioStream = new MediaStream([audioTrack]);
+      systemAudioStream = audioStream;
+      
+      const mediaRecorder = new MediaRecorder(audioStream, {
+        mimeType: 'audio/webm'
+      });
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0 && deepgramConnection && deepgramConnection.getReadyState() === 1) {
+          deepgramConnection.send(event.data);
+        }
+      };
+      
+      mediaRecorder.start(250);
+      systemAudioRecorder = mediaRecorder;
+      
+      console.log('✅ System audio capture started');
+    } else {
+      console.log('⚠️ No system audio track found');
+    }
+    
+    stream.getVideoTracks().forEach(track => track.stop());
+    
+  } catch (error) {
+    console.warn('System audio not available:', error.message);
+  }
+}
+
+function stopAudioCapture() {
+  if (microphoneRecorder) {
+    microphoneRecorder.stop();
+    microphoneRecorder = null;
+  }
+
+  if (systemAudioRecorder) {
+    systemAudioRecorder.stop();
+    systemAudioRecorder = null;
+  }
+
+  if (deepgramConnection) {
+    deepgramConnection.finish();
+    deepgramConnection = null;
+  }
+
+  if (microphoneStream) {
+    microphoneStream.getTracks().forEach(track => track.stop());
+    microphoneStream = null;
+  }
+
+  if (systemAudioStream) {
+    systemAudioStream.getTracks().forEach(track => track.stop());
+    systemAudioStream = null;
+  }
+
+  isCapturing = false;
+  console.log('✅ Audio capture stopped');
+}
+
   </script>
 </body>
 </html>
