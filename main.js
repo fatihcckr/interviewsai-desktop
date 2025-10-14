@@ -49,9 +49,7 @@ function createOverlayWindow() {
   });
 
   overlayWindow.loadFile('overlay.html');
-  
-  // ← BU SATIRI EKLE
-  overlayWindow.webContents.openDevTools();
+
   
   // Screen capture'dan gizle (Windows)
   if (process.platform === 'win32') {

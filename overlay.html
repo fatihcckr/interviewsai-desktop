@@ -189,16 +189,30 @@
 }
 
     .listening-status {
-      background: rgba(37, 37, 37, 0.5);
-      padding: 10px 16px;
-      border-bottom: 1px solid #404040;
-      pointer-events: auto;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: #9ca3af;
-    }
+  background: rgba(37, 37, 37, 0.5);
+  padding: 10px 16px;
+  border-bottom: 1px solid #404040;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #9ca3af;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar gizle ama scroll çalışsın */
+.listening-status::-webkit-scrollbar {
+  display: none;
+}
+
+.listening-status {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
     .listening-dot {
       width: 8px;
@@ -494,12 +508,18 @@ body.minimized .manual-input {
 
     // Buttons
     document.getElementById('aiAnswerBtn').addEventListener('click', () => {
-      document.getElementById('questionSection').classList.add('visible');
-      document.getElementById('answerSection').classList.add('visible');
-      
-      document.getElementById('answer').innerHTML = '<span class="placeholder">Generating...</span>';
-      // TODO: Call Electron IPC
-    });
+  // Transcript'i temizle
+  accumulatedTranscript = '';
+  const listeningSpan = document.querySelector('.listening-status span:last-child');
+  listeningSpan.textContent = 'Listening...';
+  
+  // Geri kalan kod aynı...
+  document.getElementById('questionSection').classList.add('visible');
+  document.getElementById('answerSection').classList.add('visible');
+  
+  document.getElementById('answer').innerHTML = '<span class="placeholder">Generating...</span>';
+  // TODO: Call Electron IPC
+});
 
     document.getElementById('analyzeScreenBtn').addEventListener('click', () => {
       document.getElementById('questionSection').classList.add('visible');
@@ -660,6 +680,7 @@ require('electron').ipcRenderer.on('listening-error', (event, errorMessage) => {
   alert('Listening error: ' + errorMessage);
 });
 
+let accumulatedTranscript = '';
 
 // ===== AUDIO CAPTURE IN RENDERER PROCESS =====
 const { desktopCapturer } = require('electron');
@@ -695,16 +716,21 @@ require('electron').ipcRenderer.on('deepgram-token', async (event, data) => {
     deepgramConnection.on(LiveTranscriptionEvents.Transcript, (transcriptData) => {
   const transcriptText = transcriptData.channel.alternatives[0].transcript;
   if (transcriptText) {
-    // "Listening..." yazan yeri bul
-    const listeningStatus = document.querySelector('.listening-status span');
+    const listeningStatusDiv = document.querySelector('.listening-status');
+    const listeningSpan = listeningStatusDiv.querySelector('span:last-child');
     
     if (transcriptData.is_final) {
-      // Final transcript - kalın yazı
-      listeningStatus.innerHTML = `<strong>${transcriptText}</strong>`;
+      // Final transcript - biriktir
+      accumulatedTranscript += (accumulatedTranscript ? ' ' : '') + transcriptText;
+      listeningSpan.textContent = accumulatedTranscript;
     } else {
-      // Interim transcript - normal yazı (gri)
-      listeningStatus.innerHTML = `<span style="color: #9ca3af;">${transcriptText}</span>`;
+      // Interim transcript - geçici göster (gri renkte)
+      const tempText = accumulatedTranscript + (accumulatedTranscript ? ' ' : '') + transcriptText;
+      listeningSpan.innerHTML = `${accumulatedTranscript}<span style="color: #9ca3af;">${accumulatedTranscript ? ' ' : ''}${transcriptText}</span>`;
     }
+    
+    // Sağa scroll et (mobil gibi)
+    listeningStatusDiv.scrollLeft = listeningStatusDiv.scrollWidth;
   }
 });
 
