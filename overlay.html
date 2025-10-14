@@ -507,18 +507,129 @@ body.minimized .manual-input {
     }, 1000);
 
     // Buttons
-    document.getElementById('aiAnswerBtn').addEventListener('click', () => {
+    document.getElementById('aiAnswerBtn').addEventListener('click', async () => {
+  const questionText = accumulatedTranscript.trim();
+  
+  if (!questionText) {
+    alert('Please speak a question first!');
+    return;
+  }
+  
   // Transcript'i temizle
   accumulatedTranscript = '';
   const listeningSpan = document.querySelector('.listening-status span:last-child');
   listeningSpan.textContent = 'Listening...';
   
-  // Geri kalan kod aynı...
+  // Section'ları göster
   document.getElementById('questionSection').classList.add('visible');
   document.getElementById('answerSection').classList.add('visible');
   
-  document.getElementById('answer').innerHTML = '<span class="placeholder">Generating...</span>';
-  // TODO: Call Electron IPC
+  // Question'ı göster
+  const questionDiv = document.getElementById('question');
+  questionDiv.innerHTML = `<strong>${questionText}</strong>`;
+  
+  // Answer placeholder
+  const answerDiv = document.getElementById('answer');
+  answerDiv.innerHTML = '<span class="placeholder">Generating...</span>';
+  
+  try {
+    // Messages array oluştur
+    const messages = conversation.map(turn => ({
+      role: turn.from === 'ai' ? 'assistant' : 'user',
+      content: turn.text
+    }));
+    messages.push({ role: 'user', content: questionText });
+    
+    // Resume string
+    const resumeString = sessionSettings?.selectedResume?.content || '';
+    
+    // Backend'e istek gönder
+    const API_URL = 'http://localhost:5000/api/chat'; // Production'da değiştir
+    
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages,
+        resumeString,
+        interviewSessionId: sessionId,
+        customPrompt: sessionSettings?.extraInstructions || ''
+      })
+    });
+    
+    if (!response.ok) throw new Error('Failed to get response');
+    
+    // Streaming response'u parse et
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    
+    let fullStreamedText = '';
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+      
+      for (const line of lines) {
+        if (line.startsWith('0:"')) {
+          const content = line.slice(3, -1)
+            .replace(/\\"/g, '"')
+            .replace(/\\n/g, '\n')
+            .replace(/\\r/g, '\r')
+            .replace(/\\t/g, '\t')
+            .replace(/\\\\/g, '\\');
+          
+          fullStreamedText += content;
+          
+          // Answer'ı güncelle
+          answerDiv.innerHTML = fullStreamedText;
+        }
+      }
+    }
+    
+    // Conversation'a ekle
+    const baseId = Date.now();
+    conversation.push({
+      from: 'question_summary',
+      text: questionText,
+      id: baseId
+    });
+    conversation.push({
+      from: 'ai',
+      text: fullStreamedText,
+      id: baseId + 1
+    });
+    
+    console.log('✅ Conversation updated:', conversation);
+    
+  } catch (error) {
+    console.error('❌ Generate answer error:', error);
+    answerDiv.innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
+  }
+});
+
+// ===== AUTO-SCROLL TO LAST QUESTION =====
+function scrollToLastQuestion() {
+  const contentDiv = document.querySelector('.content');
+  const questionSection = document.getElementById('questionSection');
+  
+  if (contentDiv && questionSection) {
+    // Question section'a scroll et (Answer section'ın biraz üstünde dur)
+    setTimeout(() => {
+      contentDiv.scrollTo({
+        top: questionSection.offsetTop - 20,
+        behavior: 'smooth'
+      });
+    }, 300);
+  }
+}
+
+// Generate Answer'dan sonra scroll et
+const originalAiAnswerClick = document.getElementById('aiAnswerBtn').onclick;
+document.getElementById('aiAnswerBtn').addEventListener('click', () => {
+  scrollToLastQuestion();
 });
 
     document.getElementById('analyzeScreenBtn').addEventListener('click', () => {
@@ -574,6 +685,17 @@ body.minimized .manual-input {
 window.addEventListener('DOMContentLoaded', () => {
   console.log('Auto-starting listening...');
   
+  // Session settings'i yükle
+  if (window.electronSessionSettings) {
+    sessionSettings = window.electronSessionSettings;
+    console.log('✅ Session settings loaded:', sessionSettings);
+  }
+  
+  if (window.electronSessionId) {
+    sessionId = window.electronSessionId;
+    console.log('✅ Session ID loaded:', sessionId);
+  }
+  
   // Ensure both audio sources are enabled
   speakerEnabled = true;
   micEnabled = true;
@@ -581,8 +703,10 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('speakerBtn').classList.add('enabled');
   document.getElementById('micBtn').classList.add('enabled');
   
-  // Start listening (TODO: trigger actual audio capture)
-  require('electron').ipcRenderer.send('start-listening');
+  // Start listening with correct language
+  const language = sessionSettings?.language || 'en-US';
+  console.log('🎤 Starting with language:', language);
+  require('electron').ipcRenderer.send('start-listening', language);
 });
 
     // Hide button
@@ -681,6 +805,24 @@ require('electron').ipcRenderer.on('listening-error', (event, errorMessage) => {
 });
 
 let accumulatedTranscript = '';
+
+// ===== SESSION DATA & CONVERSATION =====
+let sessionSettings = null;
+let sessionId = null;
+let conversation = [];
+
+// Session settings'i al (main.js'den gelen)
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.electronSessionSettings) {
+    sessionSettings = window.electronSessionSettings;
+    console.log('✅ Session settings loaded:', sessionSettings);
+  }
+  
+  if (window.electronSessionId) {
+    sessionId = window.electronSessionId;
+    console.log('✅ Session ID loaded:', sessionId);
+  }
+});
 
 // ===== AUDIO CAPTURE IN RENDERER PROCESS =====
 const { desktopCapturer } = require('electron');

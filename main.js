@@ -67,31 +67,53 @@ function createOverlayWindow() {
 }
 
 function handleDeepLink(url) {
-  console.log('Deep link received:', url);
+  console.log('🔗 Deep link received:', url);
   
-  const match = url.match(/interviewsai:\/\/session\/(.+)/);
+  // URL parse et: interviewsai://session/SESSION_ID?settings=ENCODED_SETTINGS
+  const match = url.match(/interviewsai:\/\/session\/([^?]+)(?:\?settings=(.+))?/);
+  
   if (match) {
     const sessionId = match[1];
+    const encodedSettings = match[2];
     
-    // Overlay window'u aç
+    console.log('📋 Session ID:', sessionId);
+    console.log('⚙️ Encoded Settings:', encodedSettings ? 'Present' : 'Not provided');
+    
+    // Overlay window'u aç (yoksa oluştur)
     if (!overlayWindow) {
       createOverlayWindow();
     }
     
-    const sendSessionId = () => {
+    const sendSessionData = () => {
       if (overlayWindow) {
+        // Settings'i decode et
+        let settings = null;
+        if (encodedSettings) {
+          try {
+            settings = JSON.parse(decodeURIComponent(encodedSettings));
+            console.log('✅ Parsed Settings:', settings);
+          } catch (error) {
+            console.error('❌ Failed to parse settings:', error);
+          }
+        }
+        
+        // Overlay'e session ID ve settings gönder
         overlayWindow.webContents.executeJavaScript(`
-          console.log('Session ID:', '${sessionId}');
           window.electronSessionId = '${sessionId}';
+          window.electronSessionSettings = ${JSON.stringify(settings)};
+          console.log('✅ Session data injected into overlay');
+          console.log('Session ID:', '${sessionId}');
+          console.log('Settings:', ${JSON.stringify(settings)});
         `);
       }
     };
 
-    if (overlayWindow.webContents.getURL().includes('localhost')) {
-      setTimeout(sendSessionId, 1000);
+    // Overlay hazır olana kadar bekle
+    if (overlayWindow.webContents.getURL().includes('overlay.html')) {
+      setTimeout(sendSessionData, 1000);
     } else {
       overlayWindow.webContents.once('did-finish-load', () => {
-        setTimeout(sendSessionId, 1000);
+        setTimeout(sendSessionData, 1000);
       });
     }
   }
