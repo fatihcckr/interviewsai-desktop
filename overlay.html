@@ -648,36 +648,40 @@ document.getElementById('aiAnswerBtn').addEventListener('click', () => {
     });
 
     // Audio Controls
-    let speakerEnabled = true;
-    let micEnabled = true;
+let speakerEnabled = true;
+let micEnabled = true;
 
-    document.getElementById('speakerBtn').addEventListener('click', () => {
-      speakerEnabled = !speakerEnabled;
-      const btn = document.getElementById('speakerBtn');
-      
-      if (speakerEnabled) {
-        btn.classList.add('enabled');
-      } else {
-        btn.classList.remove('enabled');
-      }
-      
-      console.log('Speaker:', speakerEnabled ? 'ON' : 'OFF');
-      // TODO: Call Electron IPC
-    });
+document.getElementById('speakerBtn').addEventListener('click', () => {
+  speakerEnabled = !speakerEnabled;
+  const btn = document.getElementById('speakerBtn');
+  
+  if (speakerEnabled) {
+    btn.classList.add('enabled');
+  } else {
+    btn.classList.remove('enabled');
+  }
+  
+  console.log('Speaker:', speakerEnabled ? 'ON' : 'OFF');
+  
+  // Ses kaynağını enable/disable et
+  toggleAudioSource('system', speakerEnabled);
+});
 
-    document.getElementById('micBtn').addEventListener('click', () => {
-      micEnabled = !micEnabled;
-      const btn = document.getElementById('micBtn');
-      
-      if (micEnabled) {
-        btn.classList.add('enabled');
-      } else {
-        btn.classList.remove('enabled');
-      }
-      
-      console.log('Microphone:', micEnabled ? 'ON' : 'OFF');
-      // TODO: Call Electron IPC
-    });
+document.getElementById('micBtn').addEventListener('click', () => {
+  micEnabled = !micEnabled;
+  const btn = document.getElementById('micBtn');
+  
+  if (micEnabled) {
+    btn.classList.add('enabled');
+  } else {
+    btn.classList.remove('enabled');
+  }
+  
+  console.log('Microphone:', micEnabled ? 'ON' : 'OFF');
+  
+  // Ses kaynağını enable/disable et
+  toggleAudioSource('microphone', micEnabled);
+});
 
     console.log('InterviewsAI Overlay loaded');
 
@@ -834,6 +838,11 @@ let combinedRecorder = null;
 let audioContext = null;
 let isCapturing = false;
 
+// Audio source'ları enable/disable et
+let micSourceNode = null;
+let systemSourceNode = null;
+let gainNodes = { mic: null, system: null };
+
 // Token geldiğinde audio capture'ı başlat
 require('electron').ipcRenderer.on('deepgram-token', async (event, data) => {
   console.log('🔑 Received Deepgram token, starting audio capture...');
@@ -965,15 +974,23 @@ async function startCombinedAudio() {
     audioContext = new AudioContext();
     const destination = audioContext.createMediaStreamDestination();
     
-    // Mikrofonu bağla
-    const micSource = audioContext.createMediaStreamSource(micStream);
-    micSource.connect(destination);
+    // Mikrofonu bağla (gain node ile)
+    micSourceNode = audioContext.createMediaStreamSource(micStream);
+    gainNodes.mic = audioContext.createGain();
+    gainNodes.mic.gain.value = micEnabled ? 1 : 0; // Initial state
+    
+    micSourceNode.connect(gainNodes.mic);
+    gainNodes.mic.connect(destination);
     console.log('✅ Microphone connected to mixer');
     
-    // Eğer system audio varsa onu da bağla
+    // Eğer system audio varsa onu da bağla (gain node ile)
     if (systemAudioStream) {
-      const systemSource = audioContext.createMediaStreamSource(systemAudioStream);
-      systemSource.connect(destination);
+      systemSourceNode = audioContext.createMediaStreamSource(systemAudioStream);
+      gainNodes.system = audioContext.createGain();
+      gainNodes.system.gain.value = speakerEnabled ? 1 : 0; // Initial state
+      
+      systemSourceNode.connect(gainNodes.system);
+      gainNodes.system.connect(destination);
       console.log('✅ System audio connected to mixer');
     }
     
@@ -1005,6 +1022,11 @@ function stopAudioCapture() {
     combinedRecorder = null;
   }
 
+  // Source node'ları temizle
+  micSourceNode = null;
+  systemSourceNode = null;
+  gainNodes = { mic: null, system: null };
+
   if (audioContext) {
     audioContext.close();
     audioContext = null;
@@ -1027,6 +1049,31 @@ function stopAudioCapture() {
 
   isCapturing = false;
   console.log('✅ Audio capture stopped');
+}
+
+function toggleAudioSource(source, enabled) {
+  if (!audioContext) {
+    console.warn('Audio context not initialized');
+    return;
+  }
+  
+  try {
+    if (source === 'microphone') {
+      if (micSourceNode && gainNodes.mic) {
+        // Mikrofonu mute/unmute et
+        gainNodes.mic.gain.value = enabled ? 1 : 0;
+        console.log(`🎤 Microphone ${enabled ? 'enabled' : 'disabled'}`);
+      }
+    } else if (source === 'system') {
+      if (systemSourceNode && gainNodes.system) {
+        // System audio'yu mute/unmute et
+        gainNodes.system.gain.value = enabled ? 1 : 0;
+        console.log(`🔊 System audio ${enabled ? 'enabled' : 'disabled'}`);
+      }
+    }
+  } catch (error) {
+    console.error('Failed to toggle audio source:', error);
+  }
 }
 
   </script>
