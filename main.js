@@ -119,6 +119,27 @@ function handleDeepLink(url) {
   }
 }
 
+// Get desktop sources for system audio capture
+ipcMain.handle('get-desktop-sources', async () => {
+  const { desktopCapturer } = require('electron');
+  
+  try {
+    const sources = await desktopCapturer.getSources({
+      types: ['screen'],
+      thumbnailSize: { width: 1, height: 1 }
+    });
+    
+    return sources.map(source => ({
+      id: source.id,
+      name: source.name
+    }));
+  } catch (error) {
+    console.error('Failed to get desktop sources:', error);
+    return [];
+  }
+});
+
+
 // Mouse events IPC
 ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
   if (overlayWindow) {

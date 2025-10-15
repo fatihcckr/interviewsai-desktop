@@ -825,14 +825,13 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ===== AUDIO CAPTURE IN RENDERER PROCESS =====
-const { desktopCapturer } = require('electron');
 const { createClient, LiveTranscriptionEvents } = require('@deepgram/sdk');
 
 let deepgramConnection = null;
 let microphoneStream = null;
 let systemAudioStream = null;
-let microphoneRecorder = null;
-let systemAudioRecorder = null;
+let combinedRecorder = null;
+let audioContext = null;
 let isCapturing = false;
 
 // Token geldiğinde audio capture'ı başlat
@@ -856,29 +855,27 @@ require('electron').ipcRenderer.on('deepgram-token', async (event, data) => {
     });
 
     deepgramConnection.on(LiveTranscriptionEvents.Transcript, (transcriptData) => {
-  const transcriptText = transcriptData.channel.alternatives[0].transcript;
-  if (transcriptText) {
-    const listeningStatusDiv = document.querySelector('.listening-status');
-    const listeningSpan = listeningStatusDiv.querySelector('span:last-child');
-    
-    if (transcriptData.is_final) {
-      // Final transcript - biriktir
-      accumulatedTranscript += (accumulatedTranscript ? ' ' : '') + transcriptText;
-      listeningSpan.textContent = accumulatedTranscript;
-    } else {
-      // Interim transcript - geçici göster (gri renkte)
-      const tempText = accumulatedTranscript + (accumulatedTranscript ? ' ' : '') + transcriptText;
-      listeningSpan.innerHTML = `${accumulatedTranscript}<span style="color: #9ca3af;">${accumulatedTranscript ? ' ' : ''}${transcriptText}</span>`;
-    }
-    
-    // Sağa scroll et (mobil gibi)
-    listeningStatusDiv.scrollLeft = listeningStatusDiv.scrollWidth;
-  }
-});
+      const transcriptText = transcriptData.channel.alternatives[0].transcript;
+      if (transcriptText) {
+        const listeningStatusDiv = document.querySelector('.listening-status');
+        const listeningSpan = listeningStatusDiv.querySelector('span:last-child');
+        
+        if (transcriptData.is_final) {
+          // Final transcript - biriktir
+          accumulatedTranscript += (accumulatedTranscript ? ' ' : '') + transcriptText;
+          listeningSpan.textContent = accumulatedTranscript;
+        } else {
+          // Interim transcript - geçici göster (gri renkte)
+          listeningSpan.innerHTML = `${accumulatedTranscript}<span style="color: #9ca3af;">${accumulatedTranscript ? ' ' : ''}${transcriptText}</span>`;
+        }
+        
+        // Sağa scroll et
+        listeningStatusDiv.scrollLeft = listeningStatusDiv.scrollWidth;
+      }
+    });
 
     deepgramConnection.on(LiveTranscriptionEvents.Error, (err) => {
       console.error('❌ Deepgram error:', err);
-      alert('Deepgram error: ' + err.message);
     });
 
     deepgramConnection.on(LiveTranscriptionEvents.Close, () => {
@@ -886,11 +883,11 @@ require('electron').ipcRenderer.on('deepgram-token', async (event, data) => {
       isCapturing = false;
     });
 
-    // Microphone capture başlat
-    await startMicrophone();
-
-    // System audio capture başlat
-    await startSystemAudio();
+    // Önce system audio'yu hazırla
+    await prepareSystemAudio();
+    
+    // Sonra mikrofonu başlat ve ikisini birleştir
+    await startCombinedAudio();
 
     console.log('🎙️ Audio capture started successfully');
 
@@ -906,46 +903,11 @@ require('electron').ipcRenderer.on('stop-audio-capture', () => {
   stopAudioCapture();
 });
 
-async function startMicrophone() {
+async function prepareSystemAudio() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      } 
-    });
+    const sources = await require('electron').ipcRenderer.invoke('get-desktop-sources');
     
-    microphoneStream = stream;
-    
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'audio/webm'
-    });
-    
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0 && deepgramConnection && deepgramConnection.getReadyState() === 1) {
-        deepgramConnection.send(event.data);
-      }
-    };
-    
-    mediaRecorder.start(250);
-    microphoneRecorder = mediaRecorder;
-    
-    console.log('✅ Microphone capture started');
-  } catch (error) {
-    console.error('Failed to start microphone:', error);
-    throw error;
-  }
-}
-
-async function startSystemAudio() {
-  try {
-    const sources = await desktopCapturer.getSources({
-      types: ['screen'],
-      thumbnailSize: { width: 1, height: 1 }
-    });
-    
-    if (sources.length === 0) {
+    if (!sources || sources.length === 0) {
       console.log('⚠️ No screen sources found for system audio');
       return;
     }
@@ -971,43 +933,81 @@ async function startSystemAudio() {
     
     const audioTrack = stream.getAudioTracks()[0];
     if (audioTrack) {
-      const audioStream = new MediaStream([audioTrack]);
-      systemAudioStream = audioStream;
-      
-      const mediaRecorder = new MediaRecorder(audioStream, {
-        mimeType: 'audio/webm'
-      });
-      
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0 && deepgramConnection && deepgramConnection.getReadyState() === 1) {
-          deepgramConnection.send(event.data);
-        }
-      };
-      
-      mediaRecorder.start(250);
-      systemAudioRecorder = mediaRecorder;
-      
-      console.log('✅ System audio capture started');
+      systemAudioStream = new MediaStream([audioTrack]);
+      console.log('✅ System audio stream ready');
     } else {
       console.log('⚠️ No system audio track found');
     }
     
+    // Video track'i kapat
     stream.getVideoTracks().forEach(track => track.stop());
     
   } catch (error) {
-    console.warn('System audio not available:', error.message);
+    console.warn('⚠️ System audio not available:', error.message);
+  }
+}
+
+async function startCombinedAudio() {
+  try {
+    // Mikrofonu al
+    const micStream = await navigator.mediaDevices.getUserMedia({ 
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      } 
+    });
+    
+    microphoneStream = micStream;
+    console.log('✅ Microphone stream ready');
+    
+    // Audio context oluştur
+    audioContext = new AudioContext();
+    const destination = audioContext.createMediaStreamDestination();
+    
+    // Mikrofonu bağla
+    const micSource = audioContext.createMediaStreamSource(micStream);
+    micSource.connect(destination);
+    console.log('✅ Microphone connected to mixer');
+    
+    // Eğer system audio varsa onu da bağla
+    if (systemAudioStream) {
+      const systemSource = audioContext.createMediaStreamSource(systemAudioStream);
+      systemSource.connect(destination);
+      console.log('✅ System audio connected to mixer');
+    }
+    
+    // Birleştirilmiş stream'den MediaRecorder oluştur
+    const mediaRecorder = new MediaRecorder(destination.stream, {
+      mimeType: 'audio/webm;codecs=opus'
+    });
+    
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0 && deepgramConnection && deepgramConnection.getReadyState() === 1) {
+        deepgramConnection.send(event.data);
+      }
+    };
+    
+    mediaRecorder.start(250);
+    combinedRecorder = mediaRecorder;
+    
+    console.log('✅ Combined audio recording started');
+    
+  } catch (error) {
+    console.error('❌ Failed to start combined audio:', error);
+    throw error;
   }
 }
 
 function stopAudioCapture() {
-  if (microphoneRecorder) {
-    microphoneRecorder.stop();
-    microphoneRecorder = null;
+  if (combinedRecorder) {
+    combinedRecorder.stop();
+    combinedRecorder = null;
   }
 
-  if (systemAudioRecorder) {
-    systemAudioRecorder.stop();
-    systemAudioRecorder = null;
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
   }
 
   if (deepgramConnection) {
