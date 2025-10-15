@@ -319,3 +319,35 @@ function moveOverlay(x, y) {
     overlayWindow.setPosition(newX, newY);
   }
 }
+
+// Screenshot handler
+ipcMain.handle('capture-screenshot', async () => {
+  try {
+    const { screen } = require('electron');
+    const { desktopCapturer } = require('electron');
+    
+    // Tüm ekranları al
+    const sources = await desktopCapturer.getSources({
+      types: ['screen'],
+      thumbnailSize: screen.getPrimaryDisplay().size
+    });
+    
+    if (sources.length === 0) {
+      throw new Error('No screen sources available');
+    }
+    
+    // İlk ekranın screenshot'ını al
+    const primarySource = sources[0];
+    const screenshot = primarySource.thumbnail.toDataURL();
+    
+    // Base64 string'den "data:image/png;base64," prefix'ini kaldır
+    const base64Data = screenshot.replace(/^data:image\/png;base64,/, '');
+    
+    console.log('✅ Screenshot captured successfully');
+    return base64Data;
+    
+  } catch (error) {
+    console.error('❌ Failed to capture screenshot:', error);
+    throw error;
+  }
+});

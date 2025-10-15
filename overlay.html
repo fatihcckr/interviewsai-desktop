@@ -340,6 +340,30 @@
       display: none;
     }
 
+    /* Code block styling */
+pre {
+  background: #1e1e1e;
+  border: 1px solid #404040;
+  border-radius: 6px;
+  padding: 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+code {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e5e7eb;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.section-content strong {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
     .manual-input {
   -webkit-app-region: no-drag;
   padding: 8px 16px;
@@ -395,6 +419,40 @@
   opacity: 0.5;
 }
 
+/* Question & Answer balloon styling */
+.question-balloon {
+  background: #3b82f6;
+  color: white;
+  border-radius: 16px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.question-balloon strong {
+  color: white !important;
+  font-weight: 700;
+}
+
+.answer-balloon {
+  background: rgba(55, 55, 55, 0.8);
+  color: #e5e7eb;
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  border: 1px solid #404040;
+}
+
+.answer-balloon strong {
+  color: #fbbf24 !important;
+}
+
+.answer-balloon pre {
+  margin: 8px 0;
+}
+
 /* Minimized state - input'u da gizle */
 body.minimized .manual-input {
   display: none;
@@ -448,28 +506,12 @@ body.minimized .manual-input {
 
     <!-- Content -->
     <div class="content">
-      <!-- Question Section -->
-      <div class="section" id="questionSection">
-        <div class="section-header">
-          💬 Question
-        </div>
-        <div class="section-content" id="question">
-          <span class="placeholder">Processing...</span>
-        </div>
-      </div>
+  <!-- Question balloon will be injected here -->
+  <div id="question"></div>
 
-      <!-- Answer Section -->
-      <div class="section" id="answerSection">
-        <div class="section-header">
-          ⭐ Answer
-        </div>
-        <div class="section-content" id="answer">
-          <ul class="answer-content">
-            <li class="placeholder">Generating...</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+  <!-- Answer balloon will be injected here -->
+  <div id="answer"></div>
+</div>
 
     <!-- Manual Message Input -->
     <div class="manual-input">
@@ -520,13 +562,10 @@ body.minimized .manual-input {
   const listeningSpan = document.querySelector('.listening-status span:last-child');
   listeningSpan.textContent = 'Listening...';
   
-  // Section'ları göster
-  document.getElementById('questionSection').classList.add('visible');
-  document.getElementById('answerSection').classList.add('visible');
-  
-  // Question'ı göster
-  const questionDiv = document.getElementById('question');
-  questionDiv.innerHTML = `<strong>${questionText}</strong>`;
+    
+  // Question'ı göster (web'deki gibi balloon format)
+const questionDiv = document.getElementById('question');
+questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> ${questionText}</div>`;
   
   // Answer placeholder
   const answerDiv = document.getElementById('answer');
@@ -582,9 +621,14 @@ body.minimized .manual-input {
             .replace(/\\\\/g, '\\');
           
           fullStreamedText += content;
-          
-          // Answer'ı güncelle
-          answerDiv.innerHTML = fullStreamedText;
+
+// Answer'ı güncelle (balloon format ile)
+let formattedText = fullStreamedText
+  .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+  .replace(/\n/g, '<br>');
+
+answerDiv.innerHTML = `<div class="answer-balloon"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
         }
       }
     }
@@ -632,13 +676,156 @@ document.getElementById('aiAnswerBtn').addEventListener('click', () => {
   scrollToLastQuestion();
 });
 
-    document.getElementById('analyzeScreenBtn').addEventListener('click', () => {
-      document.getElementById('questionSection').classList.add('visible');
-      document.getElementById('answerSection').classList.add('visible');
-      
-      document.getElementById('answer').innerHTML = '<span class="placeholder">Analyzing screen...</span>';
-      // TODO: Call Electron IPC
+  document.getElementById('analyzeScreenBtn').addEventListener('click', async () => {
+  console.log('🚨 ANALYZE BUTTON CLICKED!');
+  
+  // SessionId'yi tekrar kontrol et (lazy loading)
+  if (!sessionId && window.electronSessionId) {
+    sessionId = window.electronSessionId;
+    console.log('🔄 Loaded sessionId from window:', sessionId);
+  }
+  
+  console.log('sessionId:', sessionId);
+  console.log('isAnalyzing:', isAnalyzing);
+  
+  if (!sessionId || isAnalyzing) {
+    console.log('❌ Stopping - sessionId:', sessionId, 'isAnalyzing:', isAnalyzing);
+    return;
+  }
+  
+  console.log('📸 Analyze Screen button clicked');
+  
+  setIsAnalyzing(true);
+  
+  // Question'ı güncelle
+  const questionDiv = document.getElementById('question');
+  questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> The interviewer is sharing their screen. Analyze the screen and provide a useful response.</div>`;
+  
+  // Answer placeholder
+  const answerDiv = document.getElementById('answer');
+  answerDiv.innerHTML = '<span class="placeholder">Capturing and analyzing screen...</span>';
+  
+  try {
+    // Main process'ten screenshot al
+    const screenshotBase64 = await require('electron').ipcRenderer.invoke('capture-screenshot');
+    
+    if (!screenshotBase64) {
+      throw new Error('Failed to capture screenshot');
+    }
+    
+    console.log('✅ Screenshot captured');
+    
+    // Messages array oluştur (web'deki gibi)
+const userMessage = "The interviewer is sharing their screen. Analyze the screen and provide a useful response.";
+const messages = conversation.map(turn => ({
+  role: turn.from === 'ai' ? 'assistant' : 'user',
+  content: turn.text
+}));
+
+// Screenshot mesajını ekle (OpenAI vision format) - DATA FIELD'I İLE
+messages.push({
+  role: 'user',
+  content: userMessage,
+  data: {
+    task: 'analyze-screen',
+    imageUrl: `data:image/png;base64,${screenshotBase64}`
+  }
+});
+    
+    // Resume string
+    const resumeString = sessionSettings?.selectedResume?.content || '';
+    
+    // Placeholder conversation turn'leri ekle
+    const baseId = Date.now();
+    const questionTurn = {
+      from: 'question_summary',
+      text: userMessage,
+      rawText: userMessage,
+      id: baseId
+    };
+    const aiTurn = {
+      from: 'ai',
+      text: '',
+      id: baseId + 1
+    };
+    
+    conversation.push(questionTurn);
+    conversation.push(aiTurn);
+    
+    // UI'da göster
+    questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> The interviewer is sharing their screen. Analyze the screen and provide a useful response.</div>`;
+    answerDiv.innerHTML = '<span class="placeholder">Analyzing...</span>';
+    
+    // Backend'e istek gönder
+    const API_URL = 'http://localhost:5000/api/chat';
+    
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages,
+        resumeString,
+        interviewSessionId: sessionId,
+        customPrompt: sessionSettings?.extraInstructions || ''
+      })
     });
+    
+    if (!response.ok) throw new Error('Failed to analyze screen');
+    
+    // Streaming response'u parse et (web'deki gibi)
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    
+    let fullStreamedText = '';
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+      
+      for (const line of lines) {
+        if (line.startsWith('0:"')) {
+          const content = line.slice(3, -1)
+            .replace(/\\"/g, '"')
+            .replace(/\\n/g, '\n')
+            .replace(/\\r/g, '\r')
+            .replace(/\\t/g, '\t')
+            .replace(/\\\\/g, '\\');
+          
+          fullStreamedText += content;
+          
+          // Answer'ı güncelle (real-time streaming) - Markdown code block'ları düzelt
+          let formattedText = fullStreamedText
+          .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\n/g, '<br>');
+
+        answerDiv.innerHTML = `<div class="answer-balloon"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
+                  
+          // Conversation'daki AI turn'ü güncelle
+          conversation[conversation.length - 1].text = fullStreamedText;
+        }
+      }
+    }
+
+    // Eğer fullStreamedText boşsa, raw response'u göster
+if (!fullStreamedText) {
+  console.log('📝 Raw response - streaming did not work');
+  console.log('Response status:', response.status);
+  console.log('Response headers:', [...response.headers.entries()]);
+}
+    
+    console.log('✅ Screen analysis completed');
+    
+  } catch (error) {
+    console.error('❌ Screen analysis error:', error);
+    answerDiv.innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
+  } finally {
+    setIsAnalyzing(false);
+  }
+});
 
     // End Session
     document.querySelector('.end-session-btn').addEventListener('click', () => {
@@ -778,9 +965,6 @@ sendBtn.addEventListener('click', () => {
 require('electron').ipcRenderer.on('transcript-update', (event, data) => {
   console.log('Transcript update:', data.text, 'isFinal:', data.isFinal);
   
-  // Question section'ı göster
-  document.getElementById('questionSection').classList.add('visible');
-  
   // Transcript'i question section'a yaz
   const questionDiv = document.getElementById('question');
   if (data.isFinal) {
@@ -837,6 +1021,13 @@ let systemAudioStream = null;
 let combinedRecorder = null;
 let audioContext = null;
 let isCapturing = false;
+let isAnalyzing = false;
+
+function setIsAnalyzing(value) {
+  isAnalyzing = value;
+  // İstersan burada analyze butonu disable/enable yapabilirsin
+  document.getElementById('analyzeScreenBtn').disabled = value;
+}
 
 // Audio source'ları enable/disable et
 let micSourceNode = null;
@@ -974,6 +1165,8 @@ async function startCombinedAudio() {
     audioContext = new AudioContext();
     const destination = audioContext.createMediaStreamDestination();
     
+
+
     // Mikrofonu bağla (gain node ile)
     micSourceNode = audioContext.createMediaStreamSource(micStream);
     gainNodes.mic = audioContext.createGain();
@@ -1000,6 +1193,7 @@ async function startCombinedAudio() {
     });
     
     mediaRecorder.ondataavailable = (event) => {
+
       if (event.data.size > 0 && deepgramConnection && deepgramConnection.getReadyState() === 1) {
         deepgramConnection.send(event.data);
       }
