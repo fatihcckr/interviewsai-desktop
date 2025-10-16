@@ -27,12 +27,14 @@
 
     .header {
   background: rgba(45, 45, 45, 0.5);
-  padding: 8px 16px 8px 0px; /* 12px → 8px (üst-alt padding azalt) */
+  padding: 8px 16px 8px 0px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid #404040;
-  pointer-events: auto; 
+  pointer-events: auto;
+  -webkit-app-region: drag;  /* ← YENİ: header'dan sürüklenebilir yap */
+  cursor: move;  /* ← YENİ: cursor değiştir */
 }
 
     .header-left {
@@ -42,14 +44,14 @@
     }
 
     .logo-image {
-  width: 48px; 
-  height: 48px; 
-  border-radius: 6px;
-  pointer-events: auto;
-  flex-shrink: 0;
-  margin-right: 0px;
-  margin-top: 2px; /* ← YENİ: logo'yu 2px aşağı kaydır */
-}
+      width: 48px; 
+      height: 48px; 
+      border-radius: 6px;
+      pointer-events: auto;
+      flex-shrink: 0;
+      margin-right: 0px;
+      margin-top: 2px;
+    }
 
     .status-dot {
       width: 10px;
@@ -68,14 +70,13 @@
   font-weight: 700;
   font-size: 14px;
   pointer-events: auto;
-  -webkit-app-region: drag;
-  cursor: move;
   padding: 0;
-  padding-left: 0px; /* 6px → 0px */
-  margin-left: -8px; /* ← YENİ: eksi margin ile logonun içine sok */
+  padding-left: 0px;
+  margin-left: -8px;
   white-space: nowrap;
   margin-right: 4px;
 }
+
     .header-right {
       -webkit-app-region: no-drag;
       display: flex;
@@ -91,47 +92,47 @@
     }
 
     .audio-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-.audio-btn {
-  background: #404040;
-  border: none;
-  cursor: pointer;
-  padding: 3px 6px;
-  pointer-events: auto;
-  -webkit-app-region: no-drag;
-  display: flex;
-  align-items: center;
-  gap: 3px; /* 6px → 3px (boşluğu azalt) */
-  font-size: 16px;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
+    .audio-btn {
+      background: #404040;
+      border: none;
+      cursor: pointer;
+      padding: 3px 6px;
+      pointer-events: auto;
+      -webkit-app-region: no-drag;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 16px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
 
-.audio-btn:hover {
-  background: #4b5563;
-}
+    .audio-btn:hover {
+      background: #4b5563;
+    }
 
-.audio-icon {
-  display: flex;
-  align-items: center;
-}
+    .audio-icon {
+      display: flex;
+      align-items: center;
+    }
 
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  background: #ef4444;
-  border-radius: 50%;
-  display: none;
-  animation: pulse 2s infinite; /* ← BU SATIRI EKLE */
-}
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      display: none;
+      animation: pulse 2s infinite;
+    }
 
-.audio-btn.enabled .status-indicator {
-  display: block;
-}
+    .audio-btn.enabled .status-indicator {
+      display: block;
+    }
 
     .end-session-btn {
       background: #ef4444;
@@ -174,45 +175,44 @@
     }
 
     .hide-btn:hover::after {
-  content: 'Ctrl+B';
-  position: absolute;
-  top: 100%;
-  margin-top: 4px;
-  right: -4px; /* 0 → -4px (biraz sağa kaydır) */
-  background: #1f2937;
-  padding: 4px 10px; /* 4px 8px → 4px 10px */
-  border-radius: 4px;
-  font-size: 10px;
-  white-space: nowrap;
-  pointer-events: none;
-  z-index: 1000;
-}
+      content: 'Ctrl+B';
+      position: absolute;
+      top: 100%;
+      margin-top: 4px;
+      right: -4px;
+      background: #1f2937;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 1000;
+    }
 
     .listening-status {
-  background: rgba(37, 37, 37, 0.5);
-  padding: 10px 16px;
-  border-bottom: 1px solid #404040;
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #9ca3af;
-  overflow-x: auto;
-  overflow-y: hidden;
-  white-space: nowrap;
-  scroll-behavior: smooth;
-}
+      background: rgba(37, 37, 37, 0.5);
+      padding: 10px 16px;
+      border-bottom: 1px solid #404040;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #9ca3af;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      scroll-behavior: smooth;
+    }
 
-/* Scrollbar gizle ama scroll çalışsın */
-.listening-status::-webkit-scrollbar {
-  display: none;
-}
+    .listening-status::-webkit-scrollbar {
+      display: none;
+    }
 
-.listening-status {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+    .listening-status {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
 
     .listening-dot {
       width: 8px;
@@ -263,10 +263,10 @@
     .content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 4px 8px;  /* 16px → 8px 16px (üst-alt azalt) */
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 4px;  /* 16px → 8px (elementler arası boşluk azalt) */
   pointer-events: auto;  
 }
 
@@ -279,269 +279,254 @@
       border-radius: 4px;
     }
 
-    .section {
-      background: rgba(37, 37, 37, 0.5);
-      border-radius: 10px;
-      padding: 14px;
-      border: 1px solid #404040;
-      pointer-events: auto;
-      display: none;
-    }
-
-    .section.visible {
-      display: block;
-    }
-
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #9ca3af;
-    }
-
-    .section-content {
-      font-size: 14px;
-      line-height: 1.6;
-      color: #e5e7eb;
-    }
-
-    .answer-content {
-      list-style: none;
-      padding: 0;
-    }
-
-    .answer-content li {
-      margin-bottom: 8px;
-      padding-left: 16px;
-      position: relative;
-    }
-
-    .answer-content li:before {
-      content: "•";
-      position: absolute;
-      left: 0;
-      color: #fbbf24;
-    }
-
     .placeholder {
       color: #6b7280;
       font-style: italic;
     }
 
-    /* Minimized state */
     body.minimized .content,
     body.minimized .actions,
     body.minimized .listening-status {
       display: none;
     }
 
-    /* Code block styling */
-pre {
-  background: #1e1e1e;
-  border: 1px solid #404040;
-  border-radius: 6px;
-  padding: 12px;
-  overflow-x: auto;
-  margin: 8px 0;
-}
+    pre {
+      background: #1e1e1e;
+      border: 1px solid #404040;
+      border-radius: 6px;
+      padding: 12px;
+      overflow-x: auto;
+      margin: 8px 0;
+    }
 
-code {
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #e5e7eb;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.section-content strong {
-  color: #fbbf24;
-  font-weight: 600;
-}
+    code {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #e5e7eb;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
 
     .manual-input {
-  -webkit-app-region: no-drag;
-  padding: 8px 16px;
-  display: flex;
-  gap: 8px;
-  background: rgba(37, 37, 37, 0.5);
-  border-bottom: 1px solid #404040;
-  align-items: center;
-}
+      -webkit-app-region: no-drag;
+      padding: 6px 16px;
+      display: flex;
+      gap: 6px;
+      background: rgba(37, 37, 37, 0.5);
+      border-bottom: 1px solid #404040;
+      align-items: center;
+    }
 
-.message-input {
-  flex: 1;
-  background: #2d2d2d;
-  border: 1px solid #404040;
-  border-radius: 6px;
-  padding: 8px 12px;
-  color: white;
-  font-size: 13px;
-  pointer-events: auto;
-  font-family: inherit;
-}
+    .message-input {
+      flex: 1;
+      background: #2d2d2d;
+      border: 1px solid #404040;
+      border-radius: 6px;
+      padding: 6px 12px;
+      color: white;
+      font-size: 13px;
+      pointer-events: auto;
+      font-family: inherit;
+    }
 
-.message-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-}
+    .message-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
 
-.message-input::placeholder {
-  color: #6b7280;
-}
+    .message-input::placeholder {
+      color: #6b7280;
+    }
 
-.send-btn {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  pointer-events: auto;
-  -webkit-app-region: no-drag;
-  white-space: nowrap;
-}
+    .send-btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-app-region: no-drag;
+      white-space: nowrap;
+    }
 
-.send-btn:hover {
-  background: #2563eb;
-}
+    .send-btn:hover {
+      background: #2563eb;
+    }
 
-.send-btn:disabled {
-  background: #4b5563;
-  cursor: not-allowed;
-  opacity: 0.5;
-}
+    .send-btn:disabled {
+      background: #4b5563;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
 
-/* Question & Answer balloon styling */
-.question-balloon {
+    .question-balloon {
   background: #3b82f6;
   color: white;
   border-radius: 16px;
   padding: 12px 16px;
-  margin-bottom: 12px;
+  margin-bottom: 4px;  /* 12px → 8px (answer'a olan boşluk azalt) */
   font-size: 14px;
   line-height: 1.5;
   pointer-events: auto;
 }
 
-.question-balloon strong {
-  color: white !important;
-  font-weight: 700;
+    .question-balloon strong {
+      color: white !important;
+      font-weight: 700;
+    }
+
+    .answer-balloon {
+      background: rgba(55, 55, 55, 0.8);
+      color: #e5e7eb;
+      border-radius: 16px;
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      border: 1px solid #404040;
+      pointer-events: auto;
+    }
+
+    .answer-balloon strong {
+      color: #fbbf24 !important;
+    }
+
+    .answer-balloon pre {
+      margin: 8px 0;
+    }
+
+    body.minimized .manual-input {
+      display: none;
+    }
+
+    /* Conversation navigation */
+    .conversation-nav {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 2px;  /* 8px → 4px (question'a olan boşluk azalt) */
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 
-.answer-balloon {
-  background: rgba(55, 55, 55, 0.8);
-  color: #e5e7eb;
-  border-radius: 16px;
-  padding: 12px 16px;
-  font-size: 14px;
-  line-height: 1.6;
-  border: 1px solid #404040;
-  pointer-events: auto;
+    .nav-btn {
+      background: rgba(64, 64, 64, 0.6);
+      color: white;
+      border: none;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: background 0.2s;
+      min-width: 22px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: #4b5563;
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+/* Tooltip for shortcuts */
+.action-btn {
+  position: relative;
 }
 
-.answer-balloon strong {
-  color: #fbbf24 !important;
+.action-btn::after {
+  content: attr(data-shortcut);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  background: #1f2937;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
 }
 
-.answer-balloon pre {
-  margin: 8px 0;
+.action-btn:hover::after {
+  opacity: 1;
 }
 
-/* Minimized state - input'u da gizle */
-body.minimized .manual-input {
-  display: none;
-}
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
     <div class="header">
-  <div class="header-left">
-    <img src="logo.png" class="logo-image" alt="InterviewsAI">
-    <span class="logo">Interviews AI</span>
-    <button class="hide-btn">Hide</button>
-  </div>
-  <div class="header-right">
-    <span class="timer" id="timer">00:00</span>
-    <div class="audio-controls">
-  <button class="audio-btn enabled" id="speakerBtn" title="Desktop System Audio">
-  <span class="audio-icon">
-    <!-- Computer/Desktop icon -->
-    <svg width="20" height="20" viewBox="0 0 32 32" fill="white">
-      <path d="M28 4H4a2 2 0 00-2 2v16a2 2 0 002 2h9v2H9v2h14v-2h-4v-2h9a2 2 0 002-2V6a2 2 0 00-2-2zm0 18H4V6h24z"/>
-      <rect x="6" y="8" width="20" height="12" rx="1" fill="white" opacity="0.3"/>
-    </svg>
-  </span>
-  <span class="status-indicator"></span>
-</button>
-<button class="audio-btn enabled" id="micBtn" title="Microphone">
-  <span class="audio-icon">
-    <!-- Microphone icon -->
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-      <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-      <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-    </svg>
-  </span>
-  <span class="status-indicator"></span>
-</button>
-</div>
-    <button class="end-session-btn" title="End Session">
-      ✕
-    </button>
-  </div>
-</div>
+      <div class="header-left">
+        <img src="logo.png" class="logo-image" alt="InterviewsAI">
+        <span class="logo">Interviews AI</span>
+        <button class="hide-btn">Hide</button>
+      </div>
+      <div class="header-right">
+        <span class="timer" id="timer">00:00</span>
+        <div class="audio-controls">
+          <button class="audio-btn enabled" id="speakerBtn" title="Desktop System Audio">
+            <span class="audio-icon">
+              <svg width="20" height="20" viewBox="0 0 32 32" fill="white">
+                <path d="M28 4H4a2 2 0 00-2 2v16a2 2 0 002 2h9v2H9v2h14v-2h-4v-2h9a2 2 0 002-2V6a2 2 0 00-2-2zm0 18H4V6h24z"/>
+                <rect x="6" y="8" width="20" height="12" rx="1" fill="white" opacity="0.3"/>
+              </svg>
+            </span>
+            <span class="status-indicator"></span>
+          </button>
+          <button class="audio-btn enabled" id="micBtn" title="Microphone">
+            <span class="audio-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+              </svg>
+            </span>
+            <span class="status-indicator"></span>
+          </button>
+        </div>
+        <button class="end-session-btn" title="End Session">✕</button>
+      </div>
+    </div>
 
-    <!-- Listening Status -->
     <div class="listening-status">
       <div class="listening-dot"></div>
       <span>Listening...</span>
     </div>
 
-    <!-- Content -->
     <div class="content">
-  <!-- Question balloon will be injected here -->
-  <div id="question"></div>
+      <div class="conversation-nav">
+        <button class="nav-btn" id="prevBtn" disabled title="Previous Question">&lt;</button>
+        <button class="nav-btn" id="nextBtn" disabled title="Next Question">&gt;</button>
+      </div>
+      <div id="question"></div>
+      <div id="answer"></div>
+    </div>
 
-  <!-- Answer balloon will be injected here -->
-  <div id="answer"></div>
-</div>
-
-    <!-- Manual Message Input -->
-    <div class="manual-input">
-  <input 
-    type="text" 
-    id="manualMessage" 
-    placeholder="Type manual message here..."
-    class="message-input"
-  />
-  <button class="send-btn" id="sendBtn" disabled>
-    Send
-  </button>
-</div>
-
-
-    <!-- Actions -->
     <div class="actions">
-      <button class="action-btn" id="aiAnswerBtn">
-        ⚡ Generate Answer
-      </button>
-      <button class="action-btn secondary" id="analyzeScreenBtn">
-        📸 Analyze Screen
-      </button>
+  <button class="action-btn" id="aiAnswerBtn" data-shortcut="Ctrl+G">⚡ Generate Answer</button>
+  <button class="action-btn secondary" id="analyzeScreenBtn" data-shortcut="Ctrl+K">📸 Analyze Screen</button>
+</div>
+
+    <div class="manual-input">
+      <input type="text" id="manualMessage" placeholder="Type manual message here..." class="message-input"/>
+      <button class="send-btn" id="sendBtn" disabled>Send</button>
     </div>
   </div>
 
   <script>
-    // Timer (MM:SS formatı)
     let seconds = 0;
     setInterval(() => {
       seconds++;
@@ -550,728 +535,707 @@ body.minimized .manual-input {
       document.getElementById('timer').textContent = `${m}:${s}`;
     }, 1000);
 
-    // Buttons
     document.getElementById('aiAnswerBtn').addEventListener('click', async () => {
-  const questionText = accumulatedTranscript.trim();
-  
-  if (!questionText) {
-    alert('Please speak a question first!');
-    return;
-  }
-  
-  // Transcript'i temizle
-  accumulatedTranscript = '';
-  const listeningSpan = document.querySelector('.listening-status span:last-child');
-  listeningSpan.textContent = 'Listening...';
-  
-    
-  // Question'ı göster (web'deki gibi balloon format)
-const questionDiv = document.getElementById('question');
-questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> ${questionText}</div>`;
-  
-  // Answer placeholder
-  const answerDiv = document.getElementById('answer');
-  answerDiv.innerHTML = '<span class="placeholder">Generating...</span>';
-  
-  try {
-    // Messages array oluştur
-    const messages = conversation.map(turn => ({
-      role: turn.from === 'ai' ? 'assistant' : 'user',
-      content: turn.text
-    }));
-    messages.push({ role: 'user', content: questionText });
-    
-    // Resume string
-    const resumeString = sessionSettings?.selectedResume?.content || '';
-    
-    // Backend'e istek gönder
-    const API_URL = 'http://localhost:5000/api/chat'; // Production'da değiştir
-    
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages,
-        resumeString,
-        interviewSessionId: sessionId,
-        customPrompt: sessionSettings?.extraInstructions || ''
-      })
-    });
-    
-    if (!response.ok) throw new Error('Failed to get response');
-    
-    // Streaming response'u parse et
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    
-    let fullStreamedText = '';
-    
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+      const questionText = accumulatedTranscript.trim();
       
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
-      
-      for (const line of lines) {
-        if (line.startsWith('0:"')) {
-          const content = line.slice(3, -1)
-            .replace(/\\"/g, '"')
-            .replace(/\\n/g, '\n')
-            .replace(/\\r/g, '\r')
-            .replace(/\\t/g, '\t')
-            .replace(/\\\\/g, '\\');
-          
-          fullStreamedText += content;
-
-// Answer'ı güncelle (balloon format ile)
-let formattedText = fullStreamedText
-  .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-  .replace(/\n/g, '<br>');
-
-answerDiv.innerHTML = `<div class="answer-balloon"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
-        }
+      if (!questionText) {
+        alert('Please speak a question first!');
+        return;
       }
-    }
-    
-    // Conversation'a ekle
-    const baseId = Date.now();
-    conversation.push({
-      from: 'question_summary',
-      text: questionText,
-      id: baseId
-    });
-    conversation.push({
-      from: 'ai',
-      text: fullStreamedText,
-      id: baseId + 1
-    });
-    
-    console.log('✅ Conversation updated:', conversation);
-    
-  } catch (error) {
-    console.error('❌ Generate answer error:', error);
-    answerDiv.innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
-  }
-});
-
-// ===== AUTO-SCROLL TO LAST QUESTION =====
-function scrollToLastQuestion() {
-  const contentDiv = document.querySelector('.content');
-  const questionSection = document.getElementById('questionSection');
-  
-  if (contentDiv && questionSection) {
-    // Question section'a scroll et (Answer section'ın biraz üstünde dur)
-    setTimeout(() => {
-      contentDiv.scrollTo({
-        top: questionSection.offsetTop - 20,
-        behavior: 'smooth'
-      });
-    }, 300);
-  }
-}
-
-// Generate Answer'dan sonra scroll et
-const originalAiAnswerClick = document.getElementById('aiAnswerBtn').onclick;
-document.getElementById('aiAnswerBtn').addEventListener('click', () => {
-  scrollToLastQuestion();
-});
-
-  document.getElementById('analyzeScreenBtn').addEventListener('click', async () => {
-  console.log('🚨 ANALYZE BUTTON CLICKED!');
-  
-  // SessionId'yi tekrar kontrol et (lazy loading)
-  if (!sessionId && window.electronSessionId) {
-    sessionId = window.electronSessionId;
-    console.log('🔄 Loaded sessionId from window:', sessionId);
-  }
-  
-  console.log('sessionId:', sessionId);
-  console.log('isAnalyzing:', isAnalyzing);
-  
-  if (!sessionId || isAnalyzing) {
-    console.log('❌ Stopping - sessionId:', sessionId, 'isAnalyzing:', isAnalyzing);
-    return;
-  }
-  
-  console.log('📸 Analyze Screen button clicked');
-  
-  setIsAnalyzing(true);
-  
-  // Question'ı güncelle
-  const questionDiv = document.getElementById('question');
-  questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> The interviewer is sharing their screen. Analyze the screen and provide a useful response.</div>`;
-  
-  // Answer placeholder
-  const answerDiv = document.getElementById('answer');
-  answerDiv.innerHTML = '<span class="placeholder">Capturing and analyzing screen...</span>';
-  
-  try {
-    // Main process'ten screenshot al
-    const screenshotBase64 = await require('electron').ipcRenderer.invoke('capture-screenshot');
-    
-    if (!screenshotBase64) {
-      throw new Error('Failed to capture screenshot');
-    }
-    
-    console.log('✅ Screenshot captured');
-    
-    // Messages array oluştur (web'deki gibi)
-const userMessage = "The interviewer is sharing their screen. Analyze the screen and provide a useful response.";
-const messages = conversation.map(turn => ({
-  role: turn.from === 'ai' ? 'assistant' : 'user',
-  content: turn.text
-}));
-
-// Screenshot mesajını ekle (OpenAI vision format) - DATA FIELD'I İLE
-messages.push({
-  role: 'user',
-  content: userMessage,
-  data: {
-    task: 'analyze-screen',
-    imageUrl: `data:image/png;base64,${screenshotBase64}`
-  }
-});
-    
-    // Resume string
-    const resumeString = sessionSettings?.selectedResume?.content || '';
-    
-    // Placeholder conversation turn'leri ekle
-    const baseId = Date.now();
-    const questionTurn = {
-      from: 'question_summary',
-      text: userMessage,
-      rawText: userMessage,
-      id: baseId
-    };
-    const aiTurn = {
-      from: 'ai',
-      text: '',
-      id: baseId + 1
-    };
-    
-    conversation.push(questionTurn);
-    conversation.push(aiTurn);
-    
-    // UI'da göster
-    questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> The interviewer is sharing their screen. Analyze the screen and provide a useful response.</div>`;
-    answerDiv.innerHTML = '<span class="placeholder">Analyzing...</span>';
-    
-    // Backend'e istek gönder
-    const API_URL = 'http://localhost:5000/api/chat';
-    
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages,
-        resumeString,
-        interviewSessionId: sessionId,
-        customPrompt: sessionSettings?.extraInstructions || ''
-      })
-    });
-    
-    if (!response.ok) throw new Error('Failed to analyze screen');
-    
-    // Streaming response'u parse et (web'deki gibi)
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    
-    let fullStreamedText = '';
-    
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
       
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
+      accumulatedTranscript = '';
+      const listeningSpan = document.querySelector('.listening-status span:last-child');
+      listeningSpan.textContent = 'Listening...';
       
-      for (const line of lines) {
-        if (line.startsWith('0:"')) {
-          const content = line.slice(3, -1)
-            .replace(/\\"/g, '"')
-            .replace(/\\n/g, '\n')
-            .replace(/\\r/g, '\r')
-            .replace(/\\t/g, '\t')
-            .replace(/\\\\/g, '\\');
+      const questionDiv = document.getElementById('question');
+      questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> ${questionText}</div>`;
+      
+      const answerDiv = document.getElementById('answer');
+      answerDiv.innerHTML = '<span class="placeholder">Generating...</span>';
+      
+      try {
+        const messages = conversation.map(turn => ({
+          role: turn.from === 'ai' ? 'assistant' : 'user',
+          content: turn.text
+        }));
+        messages.push({ role: 'user', content: questionText });
+        
+        const resumeString = sessionSettings?.selectedResume?.content || '';
+        const API_URL = 'http://localhost:5000/api/chat';
+        
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages,
+            resumeString,
+            interviewSessionId: sessionId,
+            customPrompt: sessionSettings?.extraInstructions || ''
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to get response');
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullStreamedText = '';
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
           
-          fullStreamedText += content;
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
           
-          // Answer'ı güncelle (real-time streaming) - Markdown code block'ları düzelt
-          let formattedText = fullStreamedText
-          .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\n/g, '<br>');
-
-        answerDiv.innerHTML = `<div class="answer-balloon"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
-                  
-          // Conversation'daki AI turn'ü güncelle
-          conversation[conversation.length - 1].text = fullStreamedText;
+          for (const line of lines) {
+            if (line.startsWith('0:"')) {
+              const content = line.slice(3, -1)
+                .replace(/\\"/g, '"')
+                .replace(/\\n/g, '\n')
+                .replace(/\\r/g, '\r')
+                .replace(/\\t/g, '\t')
+                .replace(/\\\\/g, '\\');
+              
+              fullStreamedText += content;
+              
+              let formattedText = fullStreamedText
+                .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+              
+              answerDiv.innerHTML = `<div class="answer-balloon"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
+            }
+          }
         }
+        
+        const baseId = Date.now();
+        conversation.push({
+          from: 'question_summary',
+          text: questionText,
+          id: baseId
+        });
+        conversation.push({
+          from: 'ai',
+          text: fullStreamedText,
+          id: baseId + 1
+        });
+        
+        console.log('✅ Conversation updated:', conversation);
+        refreshNavigation(); 
+        
+      } catch (error) {
+        console.error('❌ Generate answer error:', error);
+        answerDiv.innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
       }
-    }
+    });
 
-    // Eğer fullStreamedText boşsa, raw response'u göster
-if (!fullStreamedText) {
-  console.log('📝 Raw response - streaming did not work');
-  console.log('Response status:', response.status);
-  console.log('Response headers:', [...response.headers.entries()]);
-}
-    
-    console.log('✅ Screen analysis completed');
-    
-  } catch (error) {
-    console.error('❌ Screen analysis error:', error);
-    answerDiv.innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
-  } finally {
-    setIsAnalyzing(false);
-  }
-});
+    document.getElementById('analyzeScreenBtn').addEventListener('click', async () => {
+      if (!sessionId && window.electronSessionId) {
+        sessionId = window.electronSessionId;
+      }
+      
+      if (!sessionId || isAnalyzing) return;
+      
+      setIsAnalyzing(true);
+      
+      const questionDiv = document.getElementById('question');
+      questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> The interviewer is sharing their screen. Analyze the screen and provide a useful response.</div>`;
+      
+      const answerDiv = document.getElementById('answer');
+      answerDiv.innerHTML = '<span class="placeholder">Capturing and analyzing screen...</span>';
+      
+      try {
+        const screenshotBase64 = await require('electron').ipcRenderer.invoke('capture-screenshot');
+        
+        if (!screenshotBase64) throw new Error('Failed to capture screenshot');
+        
+        const userMessage = "The interviewer is sharing their screen. Analyze the screen and provide a useful response.";
+        const messages = conversation.map(turn => ({
+          role: turn.from === 'ai' ? 'assistant' : 'user',
+          content: turn.text
+        }));
+        
+        messages.push({
+          role: 'user',
+          content: userMessage,
+          data: {
+            task: 'analyze-screen',
+            imageUrl: `data:image/png;base64,${screenshotBase64}`
+          }
+        });
+        
+        const resumeString = sessionSettings?.selectedResume?.content || '';
+        const baseId = Date.now();
+        
+        conversation.push({
+          from: 'question_summary',
+          text: userMessage,
+          rawText: userMessage,
+          id: baseId
+        });
+        conversation.push({
+          from: 'ai',
+          text: '',
+          id: baseId + 1
+        });
+        
+        answerDiv.innerHTML = '<span class="placeholder">Analyzing...</span>';
+        
+        const API_URL = 'http://localhost:5000/api/chat';
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages,
+            resumeString,
+            interviewSessionId: sessionId,
+            customPrompt: sessionSettings?.extraInstructions || ''
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to analyze screen');
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullStreamedText = '';
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+          
+          for (const line of lines) {
+            if (line.startsWith('0:"')) {
+              const content = line.slice(3, -1)
+                .replace(/\\"/g, '"')
+                .replace(/\\n/g, '\n')
+                .replace(/\\r/g, '\r')
+                .replace(/\\t/g, '\t')
+                .replace(/\\\\/g, '\\');
+              
+              fullStreamedText += content;
+              
+              let formattedText = fullStreamedText
+                .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+              
+              answerDiv.innerHTML = `<div class="answer-balloon"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
+              conversation[conversation.length - 1].text = fullStreamedText;
+            }
+          }
+        }
+        
+        refreshNavigation();
+        
+      } catch (error) {
+        console.error('❌ Screen analysis error:', error);
+        answerDiv.innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
+      } finally {
+        setIsAnalyzing(false);
+      }
+    });
 
-    // End Session
     document.querySelector('.end-session-btn').addEventListener('click', () => {
       if (confirm('Are you sure you want to end this session?')) {
         require('electron').ipcRenderer.send('end-session');
       }
     });
 
-    // Audio Controls
-let speakerEnabled = true;
-let micEnabled = true;
+    let speakerEnabled = true;
+    let micEnabled = true;
 
-document.getElementById('speakerBtn').addEventListener('click', () => {
-  speakerEnabled = !speakerEnabled;
-  const btn = document.getElementById('speakerBtn');
-  
-  if (speakerEnabled) {
-    btn.classList.add('enabled');
-  } else {
-    btn.classList.remove('enabled');
-  }
-  
-  console.log('Speaker:', speakerEnabled ? 'ON' : 'OFF');
-  
-  // Ses kaynağını enable/disable et
-  toggleAudioSource('system', speakerEnabled);
-});
-
-document.getElementById('micBtn').addEventListener('click', () => {
-  micEnabled = !micEnabled;
-  const btn = document.getElementById('micBtn');
-  
-  if (micEnabled) {
-    btn.classList.add('enabled');
-  } else {
-    btn.classList.remove('enabled');
-  }
-  
-  console.log('Microphone:', micEnabled ? 'ON' : 'OFF');
-  
-  // Ses kaynağını enable/disable et
-  toggleAudioSource('microphone', micEnabled);
-});
-
-    console.log('InterviewsAI Overlay loaded');
-
-    // Auto-start listening when overlay loads
-window.addEventListener('DOMContentLoaded', () => {
-  console.log('Auto-starting listening...');
-  
-  // Session settings'i yükle
-  if (window.electronSessionSettings) {
-    sessionSettings = window.electronSessionSettings;
-    console.log('✅ Session settings loaded:', sessionSettings);
-  }
-  
-  if (window.electronSessionId) {
-    sessionId = window.electronSessionId;
-    console.log('✅ Session ID loaded:', sessionId);
-  }
-  
-  // Ensure both audio sources are enabled
-  speakerEnabled = true;
-  micEnabled = true;
-  
-  document.getElementById('speakerBtn').classList.add('enabled');
-  document.getElementById('micBtn').classList.add('enabled');
-  
-  // Start listening with correct language
-  const language = sessionSettings?.language || 'en-US';
-  console.log('🎤 Starting with language:', language);
-  require('electron').ipcRenderer.send('start-listening', language);
-});
-
-    // Hide button
-    document.querySelector('.hide-btn').addEventListener('click', () => {
-      console.log('Hide button clicked');
-      require('electron').ipcRenderer.send('hide-overlay');
+    document.getElementById('speakerBtn').addEventListener('click', () => {
+      speakerEnabled = !speakerEnabled;
+      const btn = document.getElementById('speakerBtn');
+      btn.classList.toggle('enabled', speakerEnabled);
+      toggleAudioSource('system', speakerEnabled);
     });
 
-    // Ctrl+B kısayolu
-    require('electron').ipcRenderer.on('toggle-hide', () => {
-      console.log('Ctrl+B pressed - toggling hide');
-      require('electron').ipcRenderer.send('hide-overlay');
+    document.getElementById('micBtn').addEventListener('click', () => {
+      micEnabled = !micEnabled;
+      const btn = document.getElementById('micBtn');
+      btn.classList.toggle('enabled', micEnabled);
+      toggleAudioSource('microphone', micEnabled);
     });
 
-    // Listen for minimize toggle
-    require('electron').ipcRenderer.on('toggle-minimize', (event, isMinimized) => {
-      if (isMinimized) {
-        document.body.classList.add('minimized');
-        document.querySelector('.hide-btn').textContent = 'Show';
-      } else {
-        document.body.classList.remove('minimized');
-        document.querySelector('.hide-btn').textContent = 'Hide';
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.electronSessionSettings) {
+        sessionSettings = window.electronSessionSettings;
       }
-    });
-
-    // Mouse event handling
-    document.addEventListener('mousemove', (e) => {
-  const isOverInteractive = e.target.closest('button, .content, .header, .listening-status, .manual-input');
-  
-  try {
-    if (isOverInteractive) {
-      require('electron').ipcRenderer.send('set-ignore-mouse-events', false);
-    } else {
-      require('electron').ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
-    }
-  } catch (err) {
-    console.error('Mouse event error:', err);
-  }
-});
-
-    // Manual message input handler
-const messageInput = document.getElementById('manualMessage');
-const sendBtn = document.getElementById('sendBtn');
-
-messageInput.addEventListener('input', () => {
-  if (messageInput.value.trim().length > 0) {
-    sendBtn.disabled = false;
-  } else {
-    sendBtn.disabled = true;
-  }
-});
-
-sendBtn.addEventListener('click', () => {
-  const message = messageInput.value.trim();
-  if (message) {
-    console.log('Manual message:', message);
-    // TODO: Send message via IPC
-    messageInput.value = '';
-    sendBtn.disabled = true;
-  }
-});
-
-
-// Deepgram transcript updates
-require('electron').ipcRenderer.on('transcript-update', (event, data) => {
-  console.log('Transcript update:', data.text, 'isFinal:', data.isFinal);
-  
-  // Transcript'i question section'a yaz
-  const questionDiv = document.getElementById('question');
-  if (data.isFinal) {
-    // Final transcript - kalın yazı
-    questionDiv.innerHTML = `<strong>${data.text}</strong>`;
-  } else {
-    // Interim transcript - normal yazı
-    questionDiv.innerHTML = `<span class="text-gray-400">${data.text}</span>`;
-  }
-});
-
-// Listening started event
-require('electron').ipcRenderer.on('listening-started', () => {
-  console.log('✅ Listening started successfully');
-});
-
-// Listening stopped event
-require('electron').ipcRenderer.on('listening-stopped', () => {
-  console.log('⏹️ Listening stopped');
-});
-
-// Listening error event
-require('electron').ipcRenderer.on('listening-error', (event, errorMessage) => {
-  console.error('❌ Listening error:', errorMessage);
-  alert('Listening error: ' + errorMessage);
-});
-
-let accumulatedTranscript = '';
-
-// ===== SESSION DATA & CONVERSATION =====
-let sessionSettings = null;
-let sessionId = null;
-let conversation = [];
-
-// Session settings'i al (main.js'den gelen)
-window.addEventListener('DOMContentLoaded', () => {
-  if (window.electronSessionSettings) {
-    sessionSettings = window.electronSessionSettings;
-    console.log('✅ Session settings loaded:', sessionSettings);
-  }
-  
-  if (window.electronSessionId) {
-    sessionId = window.electronSessionId;
-    console.log('✅ Session ID loaded:', sessionId);
-  }
-});
-
-// ===== AUDIO CAPTURE IN RENDERER PROCESS =====
-const { createClient, LiveTranscriptionEvents } = require('@deepgram/sdk');
-
-let deepgramConnection = null;
-let microphoneStream = null;
-let systemAudioStream = null;
-let combinedRecorder = null;
-let audioContext = null;
-let isCapturing = false;
-let isAnalyzing = false;
-
-function setIsAnalyzing(value) {
-  isAnalyzing = value;
-  // İstersan burada analyze butonu disable/enable yapabilirsin
-  document.getElementById('analyzeScreenBtn').disabled = value;
-}
-
-// Audio source'ları enable/disable et
-let micSourceNode = null;
-let systemSourceNode = null;
-let gainNodes = { mic: null, system: null };
-
-// Token geldiğinde audio capture'ı başlat
-require('electron').ipcRenderer.on('deepgram-token', async (event, data) => {
-  console.log('🔑 Received Deepgram token, starting audio capture...');
-  
-  try {
-    // Deepgram bağlantısını kur
-    const deepgram = createClient(data.token);
-    deepgramConnection = deepgram.listen.live({
-      model: 'nova-2',
-      language: data.language,
-      smart_format: true,
-      interim_results: true,
-    });
-
-    // Deepgram event listeners
-    deepgramConnection.on(LiveTranscriptionEvents.Open, () => {
-      console.log('✅ Deepgram connection opened');
-      isCapturing = true;
-    });
-
-    deepgramConnection.on(LiveTranscriptionEvents.Transcript, (transcriptData) => {
-      const transcriptText = transcriptData.channel.alternatives[0].transcript;
-      if (transcriptText) {
-        const listeningStatusDiv = document.querySelector('.listening-status');
-        const listeningSpan = listeningStatusDiv.querySelector('span:last-child');
-        
-        if (transcriptData.is_final) {
-          // Final transcript - biriktir
-          accumulatedTranscript += (accumulatedTranscript ? ' ' : '') + transcriptText;
-          listeningSpan.textContent = accumulatedTranscript;
-        } else {
-          // Interim transcript - geçici göster (gri renkte)
-          listeningSpan.innerHTML = `${accumulatedTranscript}<span style="color: #9ca3af;">${accumulatedTranscript ? ' ' : ''}${transcriptText}</span>`;
-        }
-        
-        // Sağa scroll et
-        listeningStatusDiv.scrollLeft = listeningStatusDiv.scrollWidth;
-      }
-    });
-
-    deepgramConnection.on(LiveTranscriptionEvents.Error, (err) => {
-      console.error('❌ Deepgram error:', err);
-    });
-
-    deepgramConnection.on(LiveTranscriptionEvents.Close, () => {
-      console.log('🔌 Deepgram connection closed');
-      isCapturing = false;
-    });
-
-    // Önce system audio'yu hazırla
-    await prepareSystemAudio();
-    
-    // Sonra mikrofonu başlat ve ikisini birleştir
-    await startCombinedAudio();
-
-    console.log('🎙️ Audio capture started successfully');
-
-  } catch (error) {
-    console.error('Failed to start audio capture:', error);
-    alert('Failed to start audio: ' + error.message);
-  }
-});
-
-// Stop audio capture
-require('electron').ipcRenderer.on('stop-audio-capture', () => {
-  console.log('⏹️ Stopping audio capture...');
-  stopAudioCapture();
-});
-
-async function prepareSystemAudio() {
-  try {
-    const sources = await require('electron').ipcRenderer.invoke('get-desktop-sources');
-    
-    if (!sources || sources.length === 0) {
-      console.log('⚠️ No screen sources found for system audio');
-      return;
-    }
-    
-    const primarySource = sources[0];
-    
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        mandatory: {
-          chromeMediaSource: 'desktop',
-          chromeMediaSourceId: primarySource.id
-        }
-      },
-      video: {
-        mandatory: {
-          chromeMediaSource: 'desktop',
-          chromeMediaSourceId: primarySource.id,
-          maxWidth: 1,
-          maxHeight: 1
-        }
-      }
-    });
-    
-    const audioTrack = stream.getAudioTracks()[0];
-    if (audioTrack) {
-      systemAudioStream = new MediaStream([audioTrack]);
-      console.log('✅ System audio stream ready');
-    } else {
-      console.log('⚠️ No system audio track found');
-    }
-    
-    // Video track'i kapat
-    stream.getVideoTracks().forEach(track => track.stop());
-    
-  } catch (error) {
-    console.warn('⚠️ System audio not available:', error.message);
-  }
-}
-
-async function startCombinedAudio() {
-  try {
-    // Mikrofonu al
-    const micStream = await navigator.mediaDevices.getUserMedia({ 
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      } 
-    });
-    
-    microphoneStream = micStream;
-    console.log('✅ Microphone stream ready');
-    
-    // Audio context oluştur
-    audioContext = new AudioContext();
-    const destination = audioContext.createMediaStreamDestination();
-    
-
-
-    // Mikrofonu bağla (gain node ile)
-    micSourceNode = audioContext.createMediaStreamSource(micStream);
-    gainNodes.mic = audioContext.createGain();
-    gainNodes.mic.gain.value = micEnabled ? 1 : 0; // Initial state
-    
-    micSourceNode.connect(gainNodes.mic);
-    gainNodes.mic.connect(destination);
-    console.log('✅ Microphone connected to mixer');
-    
-    // Eğer system audio varsa onu da bağla (gain node ile)
-    if (systemAudioStream) {
-      systemSourceNode = audioContext.createMediaStreamSource(systemAudioStream);
-      gainNodes.system = audioContext.createGain();
-      gainNodes.system.gain.value = speakerEnabled ? 1 : 0; // Initial state
       
-      systemSourceNode.connect(gainNodes.system);
-      gainNodes.system.connect(destination);
-      console.log('✅ System audio connected to mixer');
-    }
-    
-    // Birleştirilmiş stream'den MediaRecorder oluştur
-    const mediaRecorder = new MediaRecorder(destination.stream, {
-      mimeType: 'audio/webm;codecs=opus'
+      if (window.electronSessionId) {
+        sessionId = window.electronSessionId;
+      }
+      
+      speakerEnabled = true;
+      micEnabled = true;
+      
+      document.getElementById('speakerBtn').classList.add('enabled');
+      document.getElementById('micBtn').classList.add('enabled');
+      
+      const language = sessionSettings?.language || 'en-US';
+      require('electron').ipcRenderer.send('start-listening', language);
     });
-    
-    mediaRecorder.ondataavailable = (event) => {
 
-      if (event.data.size > 0 && deepgramConnection && deepgramConnection.getReadyState() === 1) {
-        deepgramConnection.send(event.data);
+    document.querySelector('.hide-btn').addEventListener('click', () => {
+      require('electron').ipcRenderer.send('hide-overlay');
+    });
+
+    require('electron').ipcRenderer.on('toggle-hide', () => {
+      require('electron').ipcRenderer.send('hide-overlay');
+    });
+
+    // Ctrl+G kısayolu - Generate Answer
+require('electron').ipcRenderer.on('generate-response', () => {
+  console.log('Generate response shortcut triggered');
+  document.getElementById('aiAnswerBtn').click();
+});
+
+// Ctrl+K kısayolu - Analyze Screen
+require('electron').ipcRenderer.on('analyze-screen', () => {
+  console.log('Analyze screen shortcut triggered');
+  document.getElementById('analyzeScreenBtn').click();
+});
+
+    require('electron').ipcRenderer.on('toggle-minimize', (event, isMinimized) => {
+      document.body.classList.toggle('minimized', isMinimized);
+      document.querySelector('.hide-btn').textContent = isMinimized ? 'Show' : 'Hide';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      const isOverInteractive = e.target.closest('button, .content, .header, .listening-status, .manual-input');
+      
+      try {
+        if (isOverInteractive) {
+          require('electron').ipcRenderer.send('set-ignore-mouse-events', false);
+        } else {
+          require('electron').ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
+        }
+      } catch (err) {
+        console.error('Mouse event error:', err);
       }
-    };
-    
-    mediaRecorder.start(250);
-    combinedRecorder = mediaRecorder;
-    
-    console.log('✅ Combined audio recording started');
-    
-  } catch (error) {
-    console.error('❌ Failed to start combined audio:', error);
-    throw error;
-  }
-}
+    });
 
-function stopAudioCapture() {
-  if (combinedRecorder) {
-    combinedRecorder.stop();
-    combinedRecorder = null;
-  }
+    const messageInput = document.getElementById('manualMessage');
+    const sendBtn = document.getElementById('sendBtn');
 
-  // Source node'ları temizle
-  micSourceNode = null;
-  systemSourceNode = null;
-  gainNodes = { mic: null, system: null };
+    messageInput.addEventListener('input', () => {
+      sendBtn.disabled = messageInput.value.trim().length === 0;
+    });
 
-  if (audioContext) {
-    audioContext.close();
-    audioContext = null;
-  }
-
-  if (deepgramConnection) {
-    deepgramConnection.finish();
-    deepgramConnection = null;
-  }
-
-  if (microphoneStream) {
-    microphoneStream.getTracks().forEach(track => track.stop());
-    microphoneStream = null;
-  }
-
-  if (systemAudioStream) {
-    systemAudioStream.getTracks().forEach(track => track.stop());
-    systemAudioStream = null;
-  }
-
-  isCapturing = false;
-  console.log('✅ Audio capture stopped');
-}
-
-function toggleAudioSource(source, enabled) {
-  if (!audioContext) {
-    console.warn('Audio context not initialized');
-    return;
-  }
-  
-  try {
-    if (source === 'microphone') {
-      if (micSourceNode && gainNodes.mic) {
-        // Mikrofonu mute/unmute et
-        gainNodes.mic.gain.value = enabled ? 1 : 0;
-        console.log(`🎤 Microphone ${enabled ? 'enabled' : 'disabled'}`);
+    sendBtn.addEventListener('click', async () => {
+      const message = messageInput.value.trim();
+      if (!message) return;
+      
+      const manualQuestion = message;
+      messageInput.value = '';
+      sendBtn.disabled = true;
+      
+      const questionDiv = document.getElementById('question');
+      questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> ${manualQuestion}</div>`;
+      
+      const answerDiv = document.getElementById('answer');
+      answerDiv.innerHTML = '<span class="placeholder">Generating...</span>';
+      
+      try {
+        const messages = conversation.map(turn => ({
+          role: turn.from === 'ai' ? 'assistant' : 'user',
+          content: turn.text
+        }));
+        messages.push({ role: 'user', content: manualQuestion });
+        
+        const resumeString = sessionSettings?.selectedResume?.content || '';
+        const API_URL = 'http://localhost:5000/api/chat';
+        
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages,
+            resumeString,
+            interviewSessionId: sessionId,
+            customPrompt: sessionSettings?.extraInstructions || ''
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to get response');
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullStreamedText = '';
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+          
+          for (const line of lines) {
+            if (line.startsWith('0:"')) {
+              const content = line.slice(3, -1)
+                .replace(/\\"/g, '"')
+                .replace(/\\n/g, '\n')
+                .replace(/\\r/g, '\r')
+                .replace(/\\t/g, '\t')
+                .replace(/\\\\/g, '\\');
+              
+              fullStreamedText += content;
+              
+              let formattedText = fullStreamedText
+                .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+              
+              answerDiv.innerHTML = `<div class="answer-balloon"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
+            }
+          }
+        }
+        
+        const baseId = Date.now();
+        conversation.push({
+          from: 'question_summary',
+          text: manualQuestion,
+          id: baseId
+        });
+        conversation.push({
+          from: 'ai',
+          text: fullStreamedText,
+          id: baseId + 1
+        });
+        
+        refreshNavigation();
+        
+      } catch (error) {
+        console.error('❌ Manual message error:', error);
+        answerDiv.innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
       }
-    } else if (source === 'system') {
-      if (systemSourceNode && gainNodes.system) {
-        // System audio'yu mute/unmute et
-        gainNodes.system.gain.value = enabled ? 1 : 0;
-        console.log(`🔊 System audio ${enabled ? 'enabled' : 'disabled'}`);
+    });
+
+    let accumulatedTranscript = '';
+    let sessionSettings = null;
+    let sessionId = null;
+    let conversation = [];
+
+    const { createClient, LiveTranscriptionEvents } = require('@deepgram/sdk');
+
+    let deepgramConnection = null;
+    let microphoneStream = null;
+    let systemAudioStream = null;
+    let combinedRecorder = null;
+    let audioContext = null;
+    let isCapturing = false;
+    let isAnalyzing = false;
+
+    function setIsAnalyzing(value) {
+      isAnalyzing = value;
+      document.getElementById('analyzeScreenBtn').disabled = value;
+    }
+
+    let micSourceNode = null;
+    let systemSourceNode = null;
+    let gainNodes = { mic: null, system: null };
+
+    require('electron').ipcRenderer.on('deepgram-token', async (event, data) => {
+      try {
+        const deepgram = createClient(data.token);
+        deepgramConnection = deepgram.listen.live({
+          model: 'nova-2',
+          language: data.language,
+          smart_format: true,
+          interim_results: true,
+        });
+
+        deepgramConnection.on(LiveTranscriptionEvents.Open, () => {
+          isCapturing = true;
+        });
+
+        deepgramConnection.on(LiveTranscriptionEvents.Transcript, (transcriptData) => {
+          const transcriptText = transcriptData.channel.alternatives[0].transcript;
+          if (transcriptText) {
+            const listeningStatusDiv = document.querySelector('.listening-status');
+            const listeningSpan = listeningStatusDiv.querySelector('span:last-child');
+            
+            if (transcriptData.is_final) {
+              accumulatedTranscript += (accumulatedTranscript ? ' ' : '') + transcriptText;
+              listeningSpan.textContent = accumulatedTranscript;
+            } else {
+              listeningSpan.innerHTML = `${accumulatedTranscript}<span style="color: #9ca3af;">${accumulatedTranscript ? ' ' : ''}${transcriptText}</span>`;
+            }
+            
+            listeningStatusDiv.scrollLeft = listeningStatusDiv.scrollWidth;
+          }
+        });
+
+        deepgramConnection.on(LiveTranscriptionEvents.Error, (err) => {
+          console.error('❌ Deepgram error:', err);
+        });
+
+        deepgramConnection.on(LiveTranscriptionEvents.Close, () => {
+          isCapturing = false;
+        });
+
+        await prepareSystemAudio();
+        await startCombinedAudio();
+
+      } catch (error) {
+        console.error('Failed to start audio capture:', error);
+        alert('Failed to start audio: ' + error.message);
+      }
+    });
+
+    require('electron').ipcRenderer.on('stop-audio-capture', () => {
+      stopAudioCapture();
+    });
+
+    async function prepareSystemAudio() {
+      try {
+        const sources = await require('electron').ipcRenderer.invoke('get-desktop-sources');
+        
+        if (!sources || sources.length === 0) return;
+        
+        const primarySource = sources[0];
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            mandatory: {
+              chromeMediaSource: 'desktop',
+              chromeMediaSourceId: primarySource.id
+            }
+          },
+          video: {
+            mandatory: {
+              chromeMediaSource: 'desktop',
+              chromeMediaSourceId: primarySource.id,
+              maxWidth: 1,
+              maxHeight: 1
+            }
+          }
+        });
+        
+        const audioTrack = stream.getAudioTracks()[0];
+        if (audioTrack) {
+          systemAudioStream = new MediaStream([audioTrack]);
+        }
+        
+        stream.getVideoTracks().forEach(track => track.stop());
+        
+      } catch (error) {
+        console.warn('⚠️ System audio not available:', error.message);
       }
     }
-  } catch (error) {
-    console.error('Failed to toggle audio source:', error);
-  }
-}
 
+    async function startCombinedAudio() {
+      try {
+        const micStream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          } 
+        });
+        
+        microphoneStream = micStream;
+        audioContext = new AudioContext();
+        const destination = audioContext.createMediaStreamDestination();
+        
+        micSourceNode = audioContext.createMediaStreamSource(micStream);
+        gainNodes.mic = audioContext.createGain();
+        gainNodes.mic.gain.value = micEnabled ? 1 : 0;
+        
+        micSourceNode.connect(gainNodes.mic);
+        gainNodes.mic.connect(destination);
+        
+        if (systemAudioStream) {
+          systemSourceNode = audioContext.createMediaStreamSource(systemAudioStream);
+          gainNodes.system = audioContext.createGain();
+          gainNodes.system.gain.value = speakerEnabled ? 1 : 0;
+          
+          systemSourceNode.connect(gainNodes.system);
+          gainNodes.system.connect(destination);
+        }
+        
+        const mediaRecorder = new MediaRecorder(destination.stream, {
+          mimeType: 'audio/webm;codecs=opus'
+        });
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0 && deepgramConnection && deepgramConnection.getReadyState() === 1) {
+            deepgramConnection.send(event.data);
+          }
+        };
+        
+        mediaRecorder.start(250);
+        combinedRecorder = mediaRecorder;
+        
+      } catch (error) {
+        console.error('❌ Failed to start combined audio:', error);
+        throw error;
+      }
+    }
+
+    function stopAudioCapture() {
+      if (combinedRecorder) {
+        combinedRecorder.stop();
+        combinedRecorder = null;
+      }
+
+      micSourceNode = null;
+      systemSourceNode = null;
+      gainNodes = { mic: null, system: null };
+
+      if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+      }
+
+      if (deepgramConnection) {
+        deepgramConnection.finish();
+        deepgramConnection = null;
+      }
+
+      if (microphoneStream) {
+        microphoneStream.getTracks().forEach(track => track.stop());
+        microphoneStream = null;
+      }
+
+      if (systemAudioStream) {
+        systemAudioStream.getTracks().forEach(track => track.stop());
+        systemAudioStream = null;
+      }
+
+      isCapturing = false;
+    }
+
+    function toggleAudioSource(source, enabled) {
+      if (!audioContext) return;
+      
+      try {
+        if (source === 'microphone') {
+          if (micSourceNode && gainNodes.mic) {
+            gainNodes.mic.gain.value = enabled ? 1 : 0;
+          }
+        } else if (source === 'system') {
+          if (systemSourceNode && gainNodes.system) {
+            gainNodes.system.gain.value = enabled ? 1 : 0;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to toggle audio source:', error);
+      }
+    }
+
+    let currentConversationIndex = -1;
+
+    function updateNavigationButtons() {
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      
+      const questionAnswerPairs = [];
+      for (let i = 0; i < conversation.length; i += 2) {
+        if (conversation[i] && conversation[i + 1]) {
+          questionAnswerPairs.push({
+            question: conversation[i],
+            answer: conversation[i + 1]
+          });
+        }
+      }
+      
+      const totalPairs = questionAnswerPairs.length;
+      
+      if (totalPairs === 0) {
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        return;
+      }
+      
+      if (currentConversationIndex === -1 || currentConversationIndex >= totalPairs) {
+        currentConversationIndex = -1;
+        prevBtn.disabled = totalPairs <= 1;
+        nextBtn.disabled = true;
+      } else {
+        prevBtn.disabled = currentConversationIndex === 0;
+        nextBtn.disabled = currentConversationIndex === totalPairs - 1;
+      }
+    }
+
+    function showConversationAtIndex(index) {
+      const questionAnswerPairs = [];
+      for (let i = 0; i < conversation.length; i += 2) {
+        if (conversation[i] && conversation[i + 1]) {
+          questionAnswerPairs.push({
+            question: conversation[i],
+            answer: conversation[i + 1]
+          });
+        }
+      }
+      
+      if (index === -1) {
+        currentConversationIndex = -1;
+        updateNavigationButtons();
+        return;
+      }
+      
+      if (index >= 0 && index < questionAnswerPairs.length) {
+        const pair = questionAnswerPairs[index];
+        
+        const questionDiv = document.getElementById('question');
+        questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> ${pair.question.text}</div>`;
+        
+        const answerDiv = document.getElementById('answer');
+        let formattedText = pair.answer.text
+          .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\n/g, '<br>');
+        
+        answerDiv.innerHTML = `<div class="answer-balloon"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
+        
+        currentConversationIndex = index;
+        updateNavigationButtons();
+      }
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (currentConversationIndex === -1) {
+        const questionAnswerPairs = [];
+        for (let i = 0; i < conversation.length; i += 2) {
+          if (conversation[i] && conversation[i + 1]) {
+            questionAnswerPairs.push({
+              question: conversation[i],
+              answer: conversation[i + 1]
+            });
+          }
+        }
+        showConversationAtIndex(questionAnswerPairs.length - 2);
+      } else {
+        showConversationAtIndex(currentConversationIndex - 1);
+      }
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      const questionAnswerPairs = [];
+      for (let i = 0; i < conversation.length; i += 2) {
+        if (conversation[i] && conversation[i + 1]) {
+          questionAnswerPairs.push({
+            question: conversation[i],
+            answer: conversation[i + 1]
+          });
+        }
+      }
+      
+      if (currentConversationIndex === questionAnswerPairs.length - 1) {
+        showConversationAtIndex(-1);
+      } else {
+        showConversationAtIndex(currentConversationIndex + 1);
+      }
+    });
+
+    function refreshNavigation() {
+      currentConversationIndex = -1;
+      updateNavigationButtons();
+    }
   </script>
 </body>
 </html>

@@ -56,14 +56,19 @@ function createOverlayWindow() {
     overlayWindow.setContentProtection(true);
   }
 
-  // ← BU SATIRI EKLE (setContentProtection'dan SONRA)
   overlayWindow.setIgnoreMouseEvents(true, { forward: true });
 
   overlayWindow.once('ready-to-show', () => {
-  const display = require('electron').screen.getPrimaryDisplay();
-  const { width: screenWidth } = display.workArea;
-  overlayWindow.setPosition(Math.floor(screenWidth / 2) - 200, 1); // 60px → 40px
-});
+    const display = require('electron').screen.getPrimaryDisplay();
+    const { width: screenWidth } = display.workArea;
+    overlayWindow.setPosition(Math.floor(screenWidth / 2) - 200, 1);
+  });
+
+  // ← BURAYA EKLE (fonksiyonun en sonuna, kapanış parantezinden önce)
+  overlayWindow.on('closed', () => {
+    console.log('🔴 Overlay closed, cleaning up...');
+    overlayWindow = null;
+  });
 }
 
 function handleDeepLink(url) {
@@ -255,30 +260,31 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on('second-instance', (event, commandLine) => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
-    }
-    
-    const url = commandLine.find(arg => arg.startsWith('interviewsai://'));
-    if (url) {
-      handleDeepLink(url);
-    }
-  });
+  // Main window yerine overlay'i focus et
+  if (overlayWindow) {
+    overlayWindow.focus();
+  }
+  
+  const url = commandLine.find(arg => arg.startsWith('interviewsai://'));
+  if (url) {
+    handleDeepLink(url);
+  }
+});
 }
 
 app.whenReady().then(() => {
   const url = process.argv.find(arg => arg.startsWith('interviewsai://'));
-  createMainWindow(url);
+  // createMainWindow(url); // Main window'u açma - sadece overlay kullan
 
   // Keyboard shortcuts
   registerShortcuts();
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createMainWindow();
-    }
-  });
+  // Hiçbir pencere açık değilse, sadece overlay aç
+  if (BrowserWindow.getAllWindows().length === 0) {
+    // createMainWindow(); // Main window açma
+  }
+});
 });
 
 // macOS deep link
@@ -294,13 +300,13 @@ app.on('window-all-closed', () => {
 });
 
 function registerShortcuts() {
-  // Ctrl+H: Generate AI response
-  globalShortcut.register('CommandOrControl+H', () => {
-    console.log('Ctrl+H pressed');
-    if (overlayWindow) {
-      overlayWindow.webContents.send('generate-response');
-    }
-  });
+  // Ctrl+G: Generate AI response
+globalShortcut.register('CommandOrControl+G', () => {
+  console.log('Ctrl+G pressed');
+  if (overlayWindow) {
+    overlayWindow.webContents.send('generate-response');
+  }
+});
 
   // Ctrl+K: Analyze screen
   globalShortcut.register('CommandOrControl+K', () => {
