@@ -69,7 +69,6 @@ function createOverlayWindow() {
 function handleDeepLink(url) {
   console.log('🔗 Deep link received:', url);
   
-  // URL parse et: interviewsai://session/SESSION_ID?settings=ENCODED_SETTINGS
   const match = url.match(/interviewsai:\/\/session\/([^?]+)(?:\?settings=(.+))?/);
   
   if (match) {
@@ -79,25 +78,53 @@ function handleDeepLink(url) {
     console.log('📋 Session ID:', sessionId);
     console.log('⚙️ Encoded Settings:', encodedSettings ? 'Present' : 'Not provided');
     
-    // Overlay window'u aç (yoksa oluştur)
     if (!overlayWindow) {
       createOverlayWindow();
     }
     
-    const sendSessionData = () => {
+    const sendSessionData = async () => {  // ← async ekle
       if (overlayWindow) {
-        // Settings'i decode et
         let settings = null;
         if (encodedSettings) {
           try {
             settings = JSON.parse(decodeURIComponent(encodedSettings));
             console.log('✅ Parsed Settings:', settings);
+            
+            // ===== YENİ: Resume content yoksa backend'den çek =====
+            if (settings.selectedResume?.id && !settings.selectedResume.content) {
+              console.log('🔍 Resume has no content, fetching from backend...');
+              
+              try {
+                const API_URL = process.env.NODE_ENV === 'production' 
+                  ? 'https://interviewai-pro-production.up.railway.app'
+                  : 'http://localhost:5000';
+                
+                const response = await fetch(`${API_URL}/api/resumes/${settings.selectedResume.id}`);
+                
+                if (response.ok) {
+                  const resumeData = await response.json();
+                  settings.selectedResume = {
+                    id: resumeData.id,
+                    fileName: resumeData.file_name,
+                    content: resumeData.content,
+                    fileType: resumeData.file_type,
+                    fileSize: resumeData.file_size
+                  };
+                  console.log('✅ Resume loaded from backend:', resumeData.file_name);
+                } else {
+                  console.error('❌ Failed to fetch resume:', response.status);
+                }
+              } catch (error) {
+                console.error('❌ Error fetching resume:', error);
+              }
+            }
+            // ===== YENİ KOD BİTTİ =====
+            
           } catch (error) {
             console.error('❌ Failed to parse settings:', error);
           }
         }
         
-        // Overlay'e session ID ve settings gönder
         overlayWindow.webContents.executeJavaScript(`
           window.electronSessionId = '${sessionId}';
           window.electronSessionSettings = ${JSON.stringify(settings)};
@@ -108,7 +135,6 @@ function handleDeepLink(url) {
       }
     };
 
-    // Overlay hazır olana kadar bekle
     if (overlayWindow.webContents.getURL().includes('overlay.html')) {
       setTimeout(sendSessionData, 1000);
     } else {
