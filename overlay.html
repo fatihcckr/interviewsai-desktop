@@ -762,14 +762,25 @@
     });
 
     window.addEventListener('DOMContentLoaded', () => {
-      if (window.electronSessionSettings) {
-        sessionSettings = window.electronSessionSettings;
-      }
+  console.log('🎯 Overlay loaded');
+  
+  // ===== YENİ: Resume gelene kadar bekle =====
+  const checkResumeInterval = setInterval(() => {
+    if (window.electronSessionSettings?.selectedResume?.content) {
+      clearInterval(checkResumeInterval);
+      
+      console.log('✅ Resume found in overlay!');
+      console.log('📄 Resume length:', window.electronSessionSettings.selectedResume.content.length);
+      console.log('📄 First 300 chars:', window.electronSessionSettings.selectedResume.content.substring(0, 300));
+      
+      // Settings'i kaydet
+      sessionSettings = window.electronSessionSettings;
       
       if (window.electronSessionId) {
         sessionId = window.electronSessionId;
       }
       
+      // Audio başlat
       speakerEnabled = true;
       micEnabled = true;
       
@@ -778,7 +789,20 @@
       
       const language = sessionSettings?.language || 'en-US';
       require('electron').ipcRenderer.send('start-listening', language);
-    });
+      
+    } else {
+      console.log('⏳ Waiting for resume data...');
+    }
+  }, 100); // Her 100ms kontrol et
+  
+  // 10 saniye sonra hala yoksa vazgeç
+  setTimeout(() => {
+    clearInterval(checkResumeInterval);
+    if (!sessionSettings?.selectedResume?.content) {
+      console.error('❌ Resume data never arrived!');
+    }
+  }, 10000);
+});
 
     document.querySelector('.hide-btn').addEventListener('click', () => {
       require('electron').ipcRenderer.send('hide-overlay');

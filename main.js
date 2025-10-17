@@ -103,9 +103,9 @@ function handleDeepLink(url) {
                 const API_URL = process.env.NODE_ENV === 'production' 
                   ? 'https://interviewai-pro-production.up.railway.app'
                   : 'http://localhost:5000';
-                
-                const response = await fetch(`${API_URL}/api/resumes/${settings.selectedResume.id}`);
-                
+
+                const response = await fetch(`${API_URL}/resumes/${settings.selectedResume.id}`);  // /api/ kaldırıldı
+                                
                 if (response.ok) {
                   const resumeData = await response.json();
                   settings.selectedResume = {
@@ -130,13 +130,28 @@ function handleDeepLink(url) {
           }
         }
         
-        overlayWindow.webContents.executeJavaScript(`
-          window.electronSessionId = '${sessionId}';
-          window.electronSessionSettings = ${JSON.stringify(settings)};
-          console.log('✅ Session data injected into overlay');
-          console.log('Session ID:', '${sessionId}');
-          console.log('Settings:', ${JSON.stringify(settings)});
-        `);
+        // Resume content'i log'la
+if (settings?.selectedResume?.content) {
+  console.log('📄 Resume content length:', settings.selectedResume.content.length);
+  console.log('📄 Resume preview:', settings.selectedResume.content.substring(0, 200) + '...');
+} else {
+  console.log('⚠️ Resume content is EMPTY or MISSING!');
+}
+
+overlayWindow.webContents.executeJavaScript(`
+  window.electronSessionId = '${sessionId}';
+  window.electronSessionSettings = ${JSON.stringify(settings)};
+  console.log('✅ Session data injected into overlay');
+  console.log('Session ID:', '${sessionId}');
+  console.log('Settings:', ${JSON.stringify(settings)});
+  
+  // Resume content'i kontrol et
+  if (window.electronSessionSettings?.selectedResume?.content) {
+    console.log('✅ Resume content injected, length:', window.electronSessionSettings.selectedResume.content.length);
+  } else {
+    console.error('❌ Resume content NOT injected!');
+  }
+`);
       }
     };
 
@@ -274,17 +289,21 @@ if (!gotTheLock) {
 
 app.whenReady().then(() => {
   const url = process.argv.find(arg => arg.startsWith('interviewsai://'));
-  // createMainWindow(url); // Main window'u açma - sadece overlay kullan
-
+  
   // Keyboard shortcuts
   registerShortcuts();
+  
+  // Deep link varsa işle, yoksa da overlay'i aç
+  if (url) {
+    handleDeepLink(url);
+  }
 
   app.on('activate', () => {
-  // Hiçbir pencere açık değilse, sadece overlay aç
-  if (BrowserWindow.getAllWindows().length === 0) {
-    // createMainWindow(); // Main window açma
-  }
-});
+    // Hiçbir pencere açık değilse, overlay aç
+    if (BrowserWindow.getAllWindows().length === 0 && !overlayWindow) {
+      // Deep link yoksa boş overlay aç (gerekirse)
+    }
+  });
 });
 
 // macOS deep link
