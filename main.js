@@ -87,7 +87,7 @@ function handleDeepLink(url) {
       createOverlayWindow();
     }
     
-    const sendSessionData = async () => {  // ← async ekle
+    const sendSessionData = async () => {
       if (overlayWindow) {
         let settings = null;
         if (encodedSettings) {
@@ -95,17 +95,44 @@ function handleDeepLink(url) {
             settings = JSON.parse(decodeURIComponent(encodedSettings));
             console.log('✅ Parsed Settings:', settings);
             
-            // ===== YENİ: Resume content yoksa backend'den çek =====
+            // ===== Session data'yı inject et =====
+            overlayWindow.webContents.executeJavaScript(`
+              window.electronSessionId = '${sessionId}';
+              window.electronSessionSettings = ${JSON.stringify(settings)};
+              console.log('✅ Session data injected immediately');
+            `);
+            
+            // ===== YENİ: Token'ı HEMEN al ve gönder =====
+            console.log('🔑 Fetching Deepgram token immediately...');
+            const API_URL = process.env.NODE_ENV === 'production' 
+              ? 'https://interviewai-pro-production.up.railway.app'
+              : 'http://localhost:5000';
+            
+            try {
+              const tokenResponse = await fetch(`${API_URL}/api/deepgram-token`, { method: 'POST' });
+              if (tokenResponse.ok) {
+                const tokenData = await tokenResponse.json();
+                console.log('✅ Token received, sending to overlay...');
+                
+                // Token'ı HEMEN gönder
+                overlayWindow.webContents.send('deepgram-token', {
+                  token: tokenData.key,
+                  language: settings.language || 'en-US'
+                });
+              } else {
+                console.error('❌ Failed to get token:', tokenResponse.status);
+              }
+            } catch (error) {
+              console.error('❌ Token fetch error:', error);
+            }
+            
+            // ===== Resume'ü arka planda fetch et =====
             if (settings.selectedResume?.id && !settings.selectedResume.content) {
               console.log('🔍 Resume has no content, fetching from backend...');
               
               try {
-                const API_URL = process.env.NODE_ENV === 'production' 
-                  ? 'https://interviewai-pro-production.up.railway.app'
-                  : 'http://localhost:5000';
-
-                const response = await fetch(`${API_URL}/resumes/${settings.selectedResume.id}`);  // /api/ kaldırıldı
-                                
+                const response = await fetch(`${API_URL}/resumes/${settings.selectedResume.id}`);
+                
                 if (response.ok) {
                   const resumeData = await response.json();
                   settings.selectedResume = {
@@ -116,6 +143,13 @@ function handleDeepLink(url) {
                     fileSize: resumeData.file_size
                   };
                   console.log('✅ Resume loaded from backend:', resumeData.file_name);
+                  
+                  overlayWindow.webContents.executeJavaScript(`
+                    if (window.electronSessionSettings) {
+                      window.electronSessionSettings.selectedResume = ${JSON.stringify(settings.selectedResume)};
+                      console.log('✅ Resume content updated in overlay');
+                    }
+                  `);
                 } else {
                   console.error('❌ Failed to fetch resume:', response.status);
                 }
@@ -123,43 +157,19 @@ function handleDeepLink(url) {
                 console.error('❌ Error fetching resume:', error);
               }
             }
-            // ===== YENİ KOD BİTTİ =====
             
           } catch (error) {
             console.error('❌ Failed to parse settings:', error);
           }
         }
-        
-        // Resume content'i log'la
-if (settings?.selectedResume?.content) {
-  console.log('📄 Resume content length:', settings.selectedResume.content.length);
-  console.log('📄 Resume preview:', settings.selectedResume.content.substring(0, 200) + '...');
-} else {
-  console.log('⚠️ Resume content is EMPTY or MISSING!');
-}
-
-overlayWindow.webContents.executeJavaScript(`
-  window.electronSessionId = '${sessionId}';
-  window.electronSessionSettings = ${JSON.stringify(settings)};
-  console.log('✅ Session data injected into overlay');
-  console.log('Session ID:', '${sessionId}');
-  console.log('Settings:', ${JSON.stringify(settings)});
-  
-  // Resume content'i kontrol et
-  if (window.electronSessionSettings?.selectedResume?.content) {
-    console.log('✅ Resume content injected, length:', window.electronSessionSettings.selectedResume.content.length);
-  } else {
-    console.error('❌ Resume content NOT injected!');
-  }
-`);
       }
     };
 
     if (overlayWindow.webContents.getURL().includes('overlay.html')) {
-      setTimeout(sendSessionData, 1000);
+      sendSessionData();
     } else {
       overlayWindow.webContents.once('did-finish-load', () => {
-        setTimeout(sendSessionData, 1000);
+        sendSessionData();
       });
     }
   }
@@ -226,37 +236,6 @@ ipcMain.on('hide-overlay', () => {
 ipcMain.on('end-session', () => {
   if (overlayWindow) {
     overlayWindow.close();
-  }
-});
-
-// Start listening IPC
-ipcMain.on('start-listening', async (event, language) => {
-  console.log('Starting listening with language:', language);
-  
-  try {
-    // Backend'den Deepgram token al
-    const API_URL = 'http://localhost:5000/api'; // Production'da değiştir
-    const response = await fetch(`${API_URL}/deepgram-token`, { method: 'POST' });
-    
-    if (!response.ok) {
-      throw new Error('Failed to get Deepgram token');
-    }
-    
-    const tokenData = await response.json();
-    
-    // Token'ı overlay'e gönder
-    if (overlayWindow) {
-      overlayWindow.webContents.send('deepgram-token', {
-        token: tokenData.key,
-        language: language || 'en-US'
-      });
-    }
-    
-  } catch (error) {
-    console.error('Failed to get token:', error);
-    if (overlayWindow) {
-      overlayWindow.webContents.send('listening-error', error.message);
-    }
   }
 });
 
