@@ -75,10 +75,10 @@ function handleDeepLink(url) {
   console.log('🔗 Deep link received:', url);
   
   const match = url.match(/interviewsai:\/\/session\/([^?]+)(?:\?settings=(.+))?/);
-  
-  if (match) {
-    const sessionId = match[1];
-    const encodedSettings = match[2];
+
+if (match) {
+  let sessionId = match[1];  // ← const → let yap
+  const encodedSettings = match[2];
     
     console.log('📋 Session ID:', sessionId);
     console.log('⚙️ Encoded Settings:', encodedSettings ? 'Present' : 'Not provided');
@@ -94,6 +94,47 @@ function handleDeepLink(url) {
           try {
             settings = JSON.parse(decodeURIComponent(encodedSettings));
             console.log('✅ Parsed Settings:', settings);
+
+            // ===== API_URL'i EN BAŞTA tanımla =====
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://interviewai-pro-production.up.railway.app'
+  : 'http://localhost:5000';
+
+            // ===== YENİ: Backend'e session başlat ve credit düşür =====
+console.log('💳 Starting session and deducting credit...');
+try {
+  // User ID'yi settings'den al
+  const userId = settings.userId; // Web'den gönderilmeli
+  
+  if (userId) {
+    const sessionStartResponse = await fetch(`${API_URL}/api/sessions/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: userId,
+        company: settings.company,
+        position: settings.jobTitle,
+        settings: settings
+      })
+    });
+    
+    if (sessionStartResponse.ok) {
+      const result = await sessionStartResponse.json();
+      console.log('✅ Session started, credit deducted');
+      console.log('💳 New balance:', result.user.sessions_remaining);
+      
+      // Session ID'yi güncelle
+      sessionId = result.session.id;
+    } else {
+      console.error('❌ Failed to start session:', sessionStartResponse.status);
+    }
+  } else {
+    console.warn('⚠️ No userId in settings, skipping credit deduction');
+  }
+} catch (error) {
+  console.error('❌ Session start error:', error);
+}
+// ===== YENİ KOD BİTTİ =====
             
             // ===== Session data'yı inject et =====
             overlayWindow.webContents.executeJavaScript(`
@@ -104,10 +145,7 @@ function handleDeepLink(url) {
             
             // ===== YENİ: Token'ı HEMEN al ve gönder =====
             console.log('🔑 Fetching Deepgram token immediately...');
-            const API_URL = process.env.NODE_ENV === 'production' 
-              ? 'https://interviewai-pro-production.up.railway.app'
-              : 'http://localhost:5000';
-            
+                     
             try {
               const tokenResponse = await fetch(`${API_URL}/api/deepgram-token`, { method: 'POST' });
               if (tokenResponse.ok) {

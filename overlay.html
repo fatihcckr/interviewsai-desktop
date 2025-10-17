@@ -537,23 +537,74 @@
 
   <script>
     let seconds = 0;
-    setInterval(() => {
-      seconds++;
-      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+setInterval(() => {
+  seconds++;
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  document.getElementById('timer').textContent = `${m}:${s}`;
+}, 1000);
+
+// ===== YENİ: Her 10 saniyede bir backend'e kaydet =====
+setInterval(async () => {
+  if (sessionId && conversation.length > 0) {
+    try {
+      const chatContent = conversation
+        .map(turn => {
+          if (turn.from === 'question_summary') {
+            return `USER QUESTION:\n${turn.text}\n`;
+          }
+          if (turn.from === 'ai') {
+            return `AI RESPONSE:\n${turn.text}\n`;
+          }
+          return '';
+        })
+        .join('\n');
+      
+      const transcriptContent = conversation
+        .filter(turn => turn.from === 'question_summary' && turn.rawText)
+        .map(turn => turn.rawText.trim())
+        .join('\n\n');
+      
+      const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+      const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
       const s = (seconds % 60).toString().padStart(2, '0');
-      document.getElementById('timer').textContent = `${m}:${s}`;
-    }, 1000);
+      const duration = `${h}:${m}:${s}`;
+      
+      const API_URL = 'http://localhost:5000';
+      
+      await fetch(`${API_URL}/api/sessions/${sessionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat: chatContent,
+          transcript: transcriptContent,
+          duration: duration,
+          status: 'In Progress',
+          settings: sessionSettings
+        })
+      });
+      
+      console.log('✅ Auto-saved at', duration);
+    } catch (error) {
+      console.error('❌ Auto-save failed:', error);
+    }
+  }
+}, 5000); 
 
     document.getElementById('aiAnswerBtn').addEventListener('click', async () => {
-      const questionText = accumulatedTranscript.trim();
-      
-      if (!questionText) {
-        alert('Please speak a question first!');
-        return;
-      }
+  // Hem final hem de interim transcript'i al
+  const listeningSpan = document.querySelector('.listening-status span:last-child');
+  const currentTranscript = listeningSpan.textContent.replace('Listening...', '').trim();
+  
+  // Final transcript varsa onu kullan, yoksa şu anki görünen transcript'i kullan
+  const questionText = accumulatedTranscript.trim() || currentTranscript;
+  
+  if (!questionText) {
+    alert('Please speak a question first!');
+    return;
+  }
       
       accumulatedTranscript = '';
-      const listeningSpan = document.querySelector('.listening-status span:last-child');
       listeningSpan.textContent = 'Listening...';
       
       const questionDiv = document.getElementById('question');
@@ -747,11 +798,53 @@
       }
     });
 
-    document.querySelector('.end-session-btn').addEventListener('click', () => {
-      if (confirm('Are you sure you want to end this session?')) {
-        require('electron').ipcRenderer.send('end-session');
+    document.querySelector('.end-session-btn').addEventListener('click', async () => {
+  if (confirm('Are you sure you want to end this session?')) {
+    // ===== YENİ: Session'ı backend'e kaydet =====
+    if (sessionId && conversation.length > 0) {
+      try {
+        const chatContent = conversation
+          .map(turn => {
+            if (turn.from === 'question_summary') {
+              return `USER QUESTION:\n${turn.text}\n`;
+            }
+            if (turn.from === 'ai') {
+              return `AI RESPONSE:\n${turn.text}\n`;
+            }
+            return '';
+          })
+          .join('\n');
+        
+        const transcriptContent = conversation
+          .filter(turn => turn.from === 'question_summary' && turn.rawText)
+          .map(turn => turn.rawText.trim())
+          .join('\n\n');
+        
+        const duration = document.getElementById('timer').textContent;
+        
+        const API_URL = 'http://localhost:5000';
+        
+        await fetch(`${API_URL}/api/sessions/${sessionId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat: chatContent,
+            transcript: transcriptContent,
+            duration: duration,
+            status: 'Completed',
+            settings: sessionSettings
+          })
+        });
+        
+        console.log('✅ Session saved to backend');
+      } catch (error) {
+        console.error('❌ Failed to save session:', error);
       }
-    });
+    }
+    
+    require('electron').ipcRenderer.send('end-session');
+  }
+});
 
     let speakerEnabled = true;
     let micEnabled = true;
