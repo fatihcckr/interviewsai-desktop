@@ -536,7 +536,15 @@
   </div>
 
   <script>
-    let seconds = 0;
+  let seconds = 0;
+
+// ===== YENİ: Eğer restore edilen session varsa, timer'ı oradan başlat =====
+if (window.sessionStartTime) {
+  const elapsed = Math.floor((Date.now() - window.sessionStartTime) / 1000);
+  seconds = elapsed;
+  console.log(`⏱️ Timer restored to ${seconds} seconds from sessionStartTime`);
+}
+
 setInterval(() => {
   seconds++;
   const m = Math.floor(seconds / 60).toString().padStart(2, '0');

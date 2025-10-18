@@ -95,10 +95,40 @@ if (match) {
             settings = JSON.parse(decodeURIComponent(encodedSettings));
             console.log('✅ Parsed Settings:', settings);
 
-            // ===== API_URL'i EN BAŞTA tanımla =====
+// ===== API_URL'i EN BAŞTA tanımla =====
 const API_URL = process.env.NODE_ENV === 'production' 
   ? 'https://interviewai-pro-production.up.railway.app'
   : 'http://localhost:5000';
+
+// ===== YENİ: Session start time'ı hesapla ve inject et =====
+let sessionStartTime = Date.now();
+
+// Eğer restore edilen session varsa, duration'dan hesapla
+const userId = settings.userId;
+
+if (sessionId.startsWith('session-') && !sessionId.includes('temp') && userId) {
+  try {
+    const sessionResponse = await fetch(`${API_URL}/api/sessions/${userId}`);
+    if (sessionResponse.ok) {
+      const allSessions = await sessionResponse.json();
+      const existingSession = allSessions.find((s) => s.id === sessionId);
+      
+      if (existingSession && existingSession.duration) {
+        const [h, m, s] = existingSession.duration.split(':').map(Number);
+        const totalSeconds = h * 3600 + m * 60 + s;
+        sessionStartTime = Date.now() - (totalSeconds * 1000);
+        console.log(`⏱️ Session restored with ${totalSeconds} seconds elapsed`);
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch session for timer restore:', error);
+  }
+}
+
+overlayWindow.webContents.executeJavaScript(`
+  window.sessionStartTime = ${sessionStartTime};
+  console.log('⏱️ Session start time set:', ${sessionStartTime});
+`); 
 
             // ===== YENİ: Backend'e session başlat ve credit düşür =====
 console.log('💳 Starting session and deducting credit...');
