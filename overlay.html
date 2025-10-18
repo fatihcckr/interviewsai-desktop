@@ -608,7 +608,7 @@ setInterval(async () => {
       listeningSpan.textContent = 'Listening...';
       
       const questionDiv = document.getElementById('question');
-      questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> ${questionText}</div>`;
+      questionDiv.innerHTML = `<div class="question-balloon" style="font-size: ${currentFontSize}px;"><strong>QUESTION:</strong> ${questionText}</div>`;
       
       const answerDiv = document.getElementById('answer');
       answerDiv.innerHTML = '<span class="placeholder">Generating...</span>';
@@ -663,7 +663,7 @@ setInterval(async () => {
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\n/g, '<br>');
               
-              answerDiv.innerHTML = `<div class="answer-balloon"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
+              answerDiv.innerHTML = `<div class="answer-balloon" style="font-size: ${currentFontSize}px;"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
             }
           }
         }
@@ -699,7 +699,7 @@ setInterval(async () => {
       setIsAnalyzing(true);
       
       const questionDiv = document.getElementById('question');
-      questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> The interviewer is sharing their screen. Analyze the screen and provide a useful response.</div>`;
+      questionDiv.innerHTML = `<div class="question-balloon" style="font-size: ${currentFontSize}px;"><strong>QUESTION:</strong> The interviewer is sharing their screen. Analyze the screen and provide a useful response.</div>`;
       
       const answerDiv = document.getElementById('answer');
       answerDiv.innerHTML = '<span class="placeholder">Capturing and analyzing screen...</span>';
@@ -782,7 +782,7 @@ setInterval(async () => {
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\n/g, '<br>');
               
-              answerDiv.innerHTML = `<div class="answer-balloon"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
+              answerDiv.innerHTML = `<div class="answer-balloon" style="font-size: ${currentFontSize}px;"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
               conversation[conversation.length - 1].text = fullStreamedText;
             }
           }
@@ -976,18 +976,18 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
     });
 
     sendBtn.addEventListener('click', async () => {
-      const message = messageInput.value.trim();
-      if (!message) return;
-      
-      const manualQuestion = message;
-      messageInput.value = '';
-      sendBtn.disabled = true;
-      
-      const questionDiv = document.getElementById('question');
-      questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> ${manualQuestion}</div>`;
-      
-      const answerDiv = document.getElementById('answer');
-      answerDiv.innerHTML = '<span class="placeholder">Generating...</span>';
+  const message = messageInput.value.trim();
+  if (!message) return;
+  
+  const manualQuestion = message;
+  messageInput.value = '';
+  sendBtn.disabled = true;
+  
+  const questionDiv = document.getElementById('question');
+  questionDiv.innerHTML = `<div class="question-balloon" style="font-size: ${currentFontSize}px;"><strong>QUESTION:</strong> ${manualQuestion}</div>`;
+  
+  const answerDiv = document.getElementById('answer');
+  answerDiv.innerHTML = '<span class="placeholder">Generating...</span>';
       
       try {
         const messages = conversation.map(turn => ({
@@ -1024,24 +1024,24 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
           const lines = chunk.split('\n');
           
           for (const line of lines) {
-            if (line.startsWith('0:"')) {
-              const content = line.slice(3, -1)
-                .replace(/\\"/g, '"')
-                .replace(/\\n/g, '\n')
-                .replace(/\\r/g, '\r')
-                .replace(/\\t/g, '\t')
-                .replace(/\\\\/g, '\\');
-              
-              fullStreamedText += content;
-              
-              let formattedText = fullStreamedText
-                .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br>');
-              
-              answerDiv.innerHTML = `<div class="answer-balloon"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
-            }
-          }
+  if (line.startsWith('0:"')) {
+    const content = line.slice(3, -1)
+      .replace(/\\"/g, '"')
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t')
+      .replace(/\\\\/g, '\\');
+    
+    fullStreamedText += content;
+    
+    let formattedText = fullStreamedText
+      .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+    
+    answerDiv.innerHTML = `<div class="answer-balloon" style="font-size: ${currentFontSize}px;"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
+  }
+}
         }
         
         const baseId = Date.now();
@@ -1400,7 +1400,7 @@ async function startCombinedAudioFast() {
         const pair = questionAnswerPairs[index];
         
         const questionDiv = document.getElementById('question');
-        questionDiv.innerHTML = `<div class="question-balloon"><strong>QUESTION:</strong> ${pair.question.text}</div>`;
+        questionDiv.innerHTML = `<div class="question-balloon" style="font-size: ${currentFontSize}px;"><strong>QUESTION:</strong> ${pair.question.text}</div>`;
         
         const answerDiv = document.getElementById('answer');
         let formattedText = pair.answer.text
@@ -1408,7 +1408,7 @@ async function startCombinedAudioFast() {
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           .replace(/\n/g, '<br>');
         
-        answerDiv.innerHTML = `<div class="answer-balloon"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
+        answerDiv.innerHTML = `<div class="answer-balloon" style="font-size: ${currentFontSize}px;"><strong>AI RESPONSE:</strong> ${formattedText}</div>`;
         
         currentConversationIndex = index;
         updateNavigationButtons();
