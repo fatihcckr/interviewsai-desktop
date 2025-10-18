@@ -130,11 +130,10 @@ overlayWindow.webContents.executeJavaScript(`
   console.log('⏱️ Session start time set:', ${sessionStartTime});
 `); 
 
-            // ===== YENİ: Backend'e session başlat ve credit düşür =====
+// ===== YENİ: Backend'e session başlat ve credit düşür =====
 console.log('💳 Starting session and deducting credit...');
 try {
-  // User ID'yi settings'den al
-  const userId = settings.userId; // Web'den gönderilmeli
+  const userId = settings.userId;
   
   if (userId) {
     const sessionStartResponse = await fetch(`${API_URL}/api/sessions/start`, {
@@ -153,8 +152,9 @@ try {
       console.log('✅ Session started, credit deducted');
       console.log('💳 New balance:', result.user.sessions_remaining);
       
-      // Session ID'yi güncelle
+      // ===== ÖNEMLİ: Backend'den gelen session ID'yi kullan =====
       sessionId = result.session.id;
+      console.log('🔑 Using backend session ID:', sessionId);
     } else {
       console.error('❌ Failed to start session:', sessionStartResponse.status);
     }
@@ -164,14 +164,13 @@ try {
 } catch (error) {
   console.error('❌ Session start error:', error);
 }
-// ===== YENİ KOD BİTTİ =====
-            
-            // ===== Session data'yı inject et =====
-            overlayWindow.webContents.executeJavaScript(`
-              window.electronSessionId = '${sessionId}';
-              window.electronSessionSettings = ${JSON.stringify(settings)};
-              console.log('✅ Session data injected immediately');
-            `);
+
+// ===== Session data'yı inject et (YENİ ID ile!) =====
+overlayWindow.webContents.executeJavaScript(`
+  window.electronSessionId = '${sessionId}';
+  window.electronSessionSettings = ${JSON.stringify(settings)};
+  console.log('✅ Session data injected with ID: ${sessionId}');
+`);
             
             // ===== YENİ: Token'ı HEMEN al ve gönder =====
             console.log('🔑 Fetching Deepgram token immediately...');

@@ -535,7 +535,15 @@
     </div>
   </div>
 
-  <script>
+    <script>
+  // ===== DEĞİŞKEN TANIMLAMALARI (EN ÜSTTE OLMALI!) =====
+  let accumulatedTranscript = '';
+  let sessionSettings = null;
+  let sessionId = null;
+  let conversation = [];
+  let isAnalyzing = false;
+  
+  // ===== TIMER =====
   let seconds = 0;
 
 // ===== YENİ: Eğer restore edilen session varsa, timer'ı oradan başlat =====
@@ -552,10 +560,18 @@ setInterval(() => {
   document.getElementById('timer').textContent = `${m}:${s}`;
 }, 1000);
 
+setInterval(() => {
+  console.log('🔍 [DEBUG] sessionId:', sessionId);
+  console.log('🔍 [DEBUG] conversation.length:', conversation.length);
+  console.log('🔍 [DEBUG] sessionSettings:', sessionSettings ? 'SET' : 'NULL');
+}, 5000);
+
 // ===== YENİ: Her 10 saniyede bir backend'e kaydet =====
 setInterval(async () => {
   if (sessionId && conversation.length > 0) {
     try {
+      console.log('💾 [OVERLAY] Auto-saving with session ID:', sessionId);  // ← YENİ LOG
+      
       const chatContent = conversation
         .map(turn => {
           if (turn.from === 'question_summary') {
@@ -883,9 +899,23 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('speakerBtn').classList.add('enabled');
   document.getElementById('micBtn').classList.add('enabled');
   
-  if (window.electronSessionId) {
-    sessionId = window.electronSessionId;
-  }
+  // ===== YENİ: sessionId'yi bekleyerek al =====
+  const checkSessionIdInterval = setInterval(() => {
+    if (window.electronSessionId) {
+      sessionId = window.electronSessionId;
+      console.log('✅ Session ID set:', sessionId);
+      clearInterval(checkSessionIdInterval);
+    } else {
+      console.log('⏳ Waiting for session ID...');
+    }
+  }, 100);
+  
+  setTimeout(() => {
+    clearInterval(checkSessionIdInterval);
+    if (!sessionId) {
+      console.error('❌ Session ID never arrived!');
+    }
+  }, 10000);
   
   const language = window.electronSessionSettings?.language || 'en-US';
   
@@ -1072,11 +1102,6 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
       }
     });
 
-    let accumulatedTranscript = '';
-    let sessionSettings = null;
-    let sessionId = null;
-    let conversation = [];
-
     const { createClient, LiveTranscriptionEvents } = require('@deepgram/sdk');
 
     let deepgramConnection = null;
@@ -1085,7 +1110,6 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
     let combinedRecorder = null;
     let audioContext = null;
     let isCapturing = false;
-    let isAnalyzing = false;
 
     function setIsAnalyzing(value) {
       isAnalyzing = value;
