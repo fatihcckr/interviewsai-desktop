@@ -25,7 +25,7 @@ function createMainWindow(deepLinkUrl = null) {
   });
 
   mainWindow.loadURL('http://localhost:5173');
-  mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools(); 
 
   if (deepLinkUrl) {
     handleDeepLink(deepLinkUrl);
@@ -47,6 +47,10 @@ function createOverlayWindow() {
       contextIsolation: false
     }
   });
+
+  overlayWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+  console.log(`[OVERLAY CONSOLE] ${message}`);
+});
 
   overlayWindow.loadFile('overlay.html');
 

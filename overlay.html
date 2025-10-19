@@ -560,12 +560,6 @@ setInterval(() => {
   document.getElementById('timer').textContent = `${m}:${s}`;
 }, 1000);
 
-setInterval(() => {
-  console.log('🔍 [DEBUG] sessionId:', sessionId);
-  console.log('🔍 [DEBUG] conversation.length:', conversation.length);
-  console.log('🔍 [DEBUG] sessionSettings:', sessionSettings ? 'SET' : 'NULL');
-}, 5000);
-
 // ===== YENİ: Her 10 saniyede bir backend'e kaydet =====
 setInterval(async () => {
   if (sessionId && conversation.length > 0) {
@@ -822,8 +816,13 @@ setInterval(async () => {
       }
     });
 
-    document.querySelector('.end-session-btn').addEventListener('click', async () => {
+  document.querySelector('.end-session-btn').addEventListener('click', async () => {
   if (confirm('Are you sure you want to end this session?')) {
+    console.log('🔴 [DEBUG] End Session clicked');
+    console.log('🔴 [DEBUG] sessionId:', sessionId);
+    console.log('🔴 [DEBUG] conversation.length:', conversation.length);
+    console.log('🔴 [DEBUG] sessionSettings:', sessionSettings);
+    
     // ===== YENİ: Session'ı backend'e kaydet =====
     if (sessionId && conversation.length > 0) {
       try {
@@ -840,15 +839,24 @@ setInterval(async () => {
           .join('\n');
         
         const transcriptContent = conversation
-          .filter(turn => turn.from === 'question_summary' && turn.rawText)
-          .map(turn => turn.rawText.trim())
-          .join('\n\n');
+  .filter(turn => turn.from === 'question_summary' && turn.rawText)
+  .map(turn => turn.rawText.trim())  // ← ! İŞARETİNİ KALDIR
+  .join('\n\n');
         
         const duration = document.getElementById('timer').textContent;
         
         const API_URL = 'http://localhost:5000';
         
-        await fetch(`${API_URL}/api/sessions/${sessionId}`, {
+        console.log('🔴 [DEBUG] Sending to backend:', {
+          sessionId,
+          chatLength: chatContent.length,
+          transcriptLength: transcriptContent.length,
+          duration,
+          status: 'Completed',
+          settings: sessionSettings
+        });
+        
+        const response = await fetch(`${API_URL}/api/sessions/${sessionId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -860,10 +868,16 @@ setInterval(async () => {
           })
         });
         
+        console.log('🔴 [DEBUG] Backend response status:', response.status);
+        const result = await response.json();
+        console.log('🔴 [DEBUG] Backend response:', result);
+        
         console.log('✅ Session saved to backend');
       } catch (error) {
         console.error('❌ Failed to save session:', error);
       }
+    } else {
+      console.log('⚠️ [DEBUG] End Session SKIPPED - No sessionId or conversation empty!');
     }
     
     require('electron').ipcRenderer.send('end-session');
