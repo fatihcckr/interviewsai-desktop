@@ -14,7 +14,6 @@
   "build": {
     "appId": "com.interviewsai.desktop",
     "productName": "InterviewsAI",
-    "artifactName": "InterviewsAI-${os}-${version}.${ext}",
     "files": [
       "main.js",
       "preload.js",
@@ -31,7 +30,8 @@
         }
       ],
       "icon": "logo.png",
-      "darkModeSupport": true
+      "darkModeSupport": true,
+      "artifactName": "InterviewsAI-Mac-${version}-${arch}.${ext}"
     },
     "win": {
       "target": [
@@ -40,7 +40,8 @@
           "arch": ["x64"]
         }
       ],
-      "icon": "logo.png"
+      "icon": "logo.png",
+      "artifactName": "InterviewsAI-Windows-${version}.${ext}"
     },
     "dmg": {
       "contents": [
@@ -54,13 +55,15 @@
           "type": "link",
           "path": "/Applications"
         }
-      ]
+      ],
+      "artifactName": "InterviewsAI-Mac-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "artifactName": "InterviewsAI-Windows-${version}.${ext}"
     }
   },
   "keywords": [
