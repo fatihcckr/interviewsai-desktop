@@ -1,6 +1,7 @@
 {
   "name": "interviewsai-desktop",
   "version": "1.0.0",
+  "productName": "InterviewsAI",
   "description": "InterviewsAI Desktop Overlay App",
   "main": "main.js",
   "scripts": {
@@ -13,6 +14,7 @@
   "build": {
     "appId": "com.interviewsai.desktop",
     "productName": "InterviewsAI",
+    "artifactName": "InterviewsAI-${os}-${version}.${ext}",
     "files": [
       "main.js",
       "preload.js",
