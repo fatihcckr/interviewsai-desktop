@@ -80,6 +80,6 @@
   },
   "dependencies": {
     "@deepgram/sdk": "^4.11.2",
-    "electron-squirrel-startup": "^1.0.1"
+    "electron-squirrel-startup": "^1.0.1" 
   }
 } 
