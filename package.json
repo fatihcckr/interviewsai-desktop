@@ -1,17 +1,77 @@
 {
   "name": "interviewsai-desktop",
   "version": "1.0.0",
+  "description": "InterviewsAI Desktop Overlay App",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "build": {
+    "appId": "com.interviewsai.desktop",
+    "productName": "InterviewsAI",
+    "files": [
+      "main.js",
+      "preload.js",
+      "overlay.html",
+      "logo.png",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "logo.png",
+      "darkModeSupport": true
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "logo.png"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "keywords": [
+    "interview",
+    "ai",
+    "overlay",
+    "assistant"
+  ],
+  "author": "InterviewsAI",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
-    "electron": "^38.2.2"
+    "electron": "^38.2.2",
+    "electron-builder": "^25.1.8"
   },
   "dependencies": {
     "@deepgram/sdk": "^4.11.2",
