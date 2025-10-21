@@ -561,7 +561,7 @@ setInterval(() => {
 }, 1000);
 
 // ===== YENİ: Her 10 saniyede bir backend'e kaydet =====
-setInterval(async () => {
+window.autoSaveInterval = setInterval(async () => {
   if (sessionId && conversation.length > 0) {
     try {
       console.log('💾 [OVERLAY] Auto-saving with session ID:', sessionId);  // ← YENİ LOG
@@ -818,12 +818,12 @@ setInterval(async () => {
 
   document.querySelector('.end-session-btn').addEventListener('click', async () => {
   if (confirm('Are you sure you want to end this session?')) {
+    console.log('⏸️ Stopping auto-save...');
+    clearInterval(window.autoSaveInterval);
     console.log('🔴 [DEBUG] End Session clicked');
     console.log('🔴 [DEBUG] sessionId:', sessionId);
     console.log('🔴 [DEBUG] conversation.length:', conversation.length);
-    console.log('🔴 [DEBUG] sessionSettings:', sessionSettings);
     
-    // ===== YENİ: Session'ı backend'e kaydet =====
     if (sessionId && conversation.length > 0) {
       try {
         const chatContent = conversation
@@ -839,26 +839,36 @@ setInterval(async () => {
           .join('\n');
         
         const transcriptContent = conversation
-  .filter(turn => turn.from === 'question_summary' && turn.rawText)
-  .map(turn => turn.rawText.trim())  // ← ! İŞARETİNİ KALDIR
-  .join('\n\n');
+          .filter(turn => turn.from === 'question_summary' && turn.rawText)
+          .map(turn => turn.rawText.trim())
+          .join('\n\n');
         
         const duration = document.getElementById('timer').textContent;
-        
-        const API_URL = 'http://localhost:5000';
-        
-        console.log('🔴 [DEBUG] Sending to backend:', {
-          sessionId,
-          chatLength: chatContent.length,
-          transcriptLength: transcriptContent.length,
-          duration,
-          status: 'Completed',
-          settings: sessionSettings
-        });
+const API_URL = 'http://localhost:5000';
+
+console.log('🔴 [DEBUG] Sending to backend:', {
+  sessionId,
+  chatLength: chatContent.length,
+  transcriptLength: transcriptContent.length,
+  duration,
+  status: 'Completed'
+});
+
+console.log('🚀 [FETCH] About to send request to:', `${API_URL}/api/sessions/${sessionId}`); // ← YENİ
+console.log('🚀 [FETCH] Full URL:', `http://localhost:5000/api/sessions/${sessionId}`); // ← YENİ
+
+
+
+
         
         const response = await fetch(`${API_URL}/api/sessions/${sessionId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',  // ← YENİ
+            'Pragma': 'no-cache',  // ← YENİ
+            'Expires': '0'  // ← YENİ
+          },
           body: JSON.stringify({
             chat: chatContent,
             transcript: transcriptContent,
@@ -867,19 +877,28 @@ setInterval(async () => {
             settings: sessionSettings
           })
         });
-        
+                
         console.log('🔴 [DEBUG] Backend response status:', response.status);
-        const result = await response.json();
-        console.log('🔴 [DEBUG] Backend response:', result);
         
-        console.log('✅ Session saved to backend');
+        if (response.ok) {
+          const result = await response.json();
+          console.log('🔴 [DEBUG] Backend response:', result);
+          console.log('✅ Session saved to backend successfully');
+        } else {
+          console.error('❌ Backend returned error:', response.status);
+        }
+        
+        // ===== YENİ: 500ms bekle (güvenlik için) =====
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
       } catch (error) {
         console.error('❌ Failed to save session:', error);
+        // Hata olsa bile overlay'i kapat
       }
-    } else {
-      console.log('⚠️ [DEBUG] End Session SKIPPED - No sessionId or conversation empty!');
     }
     
+    // ===== SON OLARAK overlay'i kapat =====
+    console.log('🔴 Closing overlay now...');
     require('electron').ipcRenderer.send('end-session');
   }
 });

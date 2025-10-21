@@ -52,6 +52,7 @@ function createOverlayWindow() {
   console.log(`[OVERLAY CONSOLE] ${message}`);
 });
 
+  overlayWindow.webContents.session.clearCache();
   overlayWindow.loadFile('overlay.html');
 
   
