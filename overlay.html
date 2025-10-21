@@ -564,7 +564,6 @@ setInterval(() => {
 window.autoSaveInterval = setInterval(async () => {
   if (sessionId && conversation.length > 0) {
     try {
-      console.log('💾 [OVERLAY] Auto-saving with session ID:', sessionId);  // ← YENİ LOG
       
       const chatContent = conversation
         .map(turn => {
@@ -648,7 +647,8 @@ window.autoSaveInterval = setInterval(async () => {
             messages,
             resumeString,
             interviewSessionId: sessionId,
-            customPrompt: sessionSettings?.extraInstructions || ''
+            customPrompt: sessionSettings?.extraInstructions || '',
+            selectedModel: sessionSettings?.aiModel || 'claude-sonnet-4.5'
           })
         });
         
@@ -698,7 +698,6 @@ window.autoSaveInterval = setInterval(async () => {
           id: baseId + 1
         });
         
-        console.log('✅ Conversation updated:', conversation);
         refreshNavigation(); 
         
       } catch (error) {
@@ -767,7 +766,8 @@ window.autoSaveInterval = setInterval(async () => {
             messages,
             resumeString,
             interviewSessionId: sessionId,
-            customPrompt: sessionSettings?.extraInstructions || ''
+            customPrompt: sessionSettings?.extraInstructions || '',
+            selectedModel: sessionSettings?.aiModel || 'claude-sonnet-4.5'
           })
         });
         
@@ -818,11 +818,7 @@ window.autoSaveInterval = setInterval(async () => {
 
   document.querySelector('.end-session-btn').addEventListener('click', async () => {
   if (confirm('Are you sure you want to end this session?')) {
-    console.log('⏸️ Stopping auto-save...');
     clearInterval(window.autoSaveInterval);
-    console.log('🔴 [DEBUG] End Session clicked');
-    console.log('🔴 [DEBUG] sessionId:', sessionId);
-    console.log('🔴 [DEBUG] conversation.length:', conversation.length);
     
     if (sessionId && conversation.length > 0) {
       try {
@@ -845,21 +841,6 @@ window.autoSaveInterval = setInterval(async () => {
         
         const duration = document.getElementById('timer').textContent;
 const API_URL = 'http://localhost:5000';
-
-console.log('🔴 [DEBUG] Sending to backend:', {
-  sessionId,
-  chatLength: chatContent.length,
-  transcriptLength: transcriptContent.length,
-  duration,
-  status: 'Completed'
-});
-
-console.log('🚀 [FETCH] About to send request to:', `${API_URL}/api/sessions/${sessionId}`); // ← YENİ
-console.log('🚀 [FETCH] Full URL:', `http://localhost:5000/api/sessions/${sessionId}`); // ← YENİ
-
-
-
-
         
         const response = await fetch(`${API_URL}/api/sessions/${sessionId}`, {
           method: 'PUT',
@@ -877,17 +858,8 @@ console.log('🚀 [FETCH] Full URL:', `http://localhost:5000/api/sessions/${sess
             settings: sessionSettings
           })
         });
-                
-        console.log('🔴 [DEBUG] Backend response status:', response.status);
         
-        if (response.ok) {
-          const result = await response.json();
-          console.log('🔴 [DEBUG] Backend response:', result);
-          console.log('✅ Session saved to backend successfully');
-        } else {
-          console.error('❌ Backend returned error:', response.status);
-        }
-        
+         
         // ===== YENİ: 500ms bekle (güvenlik için) =====
         await new Promise(resolve => setTimeout(resolve, 500));
         
@@ -939,7 +911,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       console.log('✅ Session ID set:', sessionId);
       clearInterval(checkSessionIdInterval);
     } else {
-      console.log('⏳ Waiting for session ID...');
     }
   }, 100);
   
@@ -988,7 +959,6 @@ audioPreparationPromise = (async () => {
       console.log('📄 Resume length:', window.electronSessionSettings.selectedResume.content.length);
       sessionSettings = window.electronSessionSettings;
     } else {
-      console.log('⏳ Waiting for resume data...');
     }
   }, 100);
   
@@ -1010,13 +980,11 @@ audioPreparationPromise = (async () => {
 
     // Ctrl+G kısayolu - Generate Answer
 require('electron').ipcRenderer.on('generate-response', () => {
-  console.log('Generate response shortcut triggered');
   document.getElementById('aiAnswerBtn').click();
 });
 
 // Ctrl+K kısayolu - Analyze Screen
 require('electron').ipcRenderer.on('analyze-screen', () => {
-  console.log('Analyze screen shortcut triggered');
   document.getElementById('analyzeScreenBtn').click();
 });
 
@@ -1077,7 +1045,8 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
             messages,
             resumeString,
             interviewSessionId: sessionId,
-            customPrompt: sessionSettings?.extraInstructions || ''
+            customPrompt: sessionSettings?.extraInstructions || '',
+            selectedModel: sessionSettings?.aiModel || 'claude-sonnet-4.5'
           })
         });
         
@@ -1156,7 +1125,6 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
     require('electron').ipcRenderer.on('deepgram-token', async (event, data) => {
   try {
     // Audio hazır mı bekle
-    console.log('⏳ Waiting for audio sources...');
     const audioReady = await audioPreparationPromise;
     
     if (!audioReady) {
@@ -1188,7 +1156,6 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
 
     deepgramConnection.on(LiveTranscriptionEvents.Transcript, (transcriptData) => {
       const transcriptText = transcriptData.channel.alternatives[0].transcript;
-      console.log('📝 Transcript received:', transcriptText); // ← YENİ LOG
       
       if (transcriptText) {
         const listeningStatusDiv = document.querySelector('.listening-status');
@@ -1554,8 +1521,6 @@ function updateFontSize() {
   // Update zoom percentage (14px = 100%)
   const zoomPercent = Math.round((currentFontSize / 14) * 100);
   document.getElementById('zoomLevel').textContent = zoomPercent + '%';
-  
-  console.log('✅ Font size updated to:', currentFontSize.toFixed(1) + 'px', '(' + zoomPercent + '%)');
 }
   </script>
 </body>
