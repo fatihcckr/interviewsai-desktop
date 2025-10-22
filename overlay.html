@@ -1063,7 +1063,7 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
           const chunk = decoder.decode(value);
           const lines = chunk.split('\n');
           
-          for (const line of lines) { 
+          for (const line of lines) {  
   if (line.startsWith('0:"')) {
     const content = line.slice(3, -1)
       .replace(/\\"/g, '"')
