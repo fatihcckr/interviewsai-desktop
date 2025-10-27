@@ -3,6 +3,8 @@ name: Build Desktop App
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'v*'  # ← YENİ: Tag push'larını dinle
   pull_request:
     branches: [ main ]
   workflow_dispatch:
