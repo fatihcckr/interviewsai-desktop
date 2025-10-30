@@ -39,6 +39,7 @@ function createOverlayWindow() {
     transparent: true,
     frame: false,
     alwaysOnTop: true,
+    visibleOnAllWorkspaces: true,
     skipTaskbar: true,
     resizable: true,
     webPreferences: {
@@ -55,11 +56,14 @@ function createOverlayWindow() {
   overlayWindow.webContents.session.clearCache();
   overlayWindow.loadFile('overlay.html');
 
+  // Her zaman en üstte kal
+overlayWindow.setAlwaysOnTop(true, 'screen-saver', 1);
+
   
-  // Screen capture'dan gizle (Windows)
-  if (process.platform === 'win32') {
-    overlayWindow.setContentProtection(true);
-  }
+  // // Screen capture'dan gizle (Windows)
+  // if (process.platform === 'win32') {
+  //   overlayWindow.setContentProtection(true);
+  // }
 
   overlayWindow.setIgnoreMouseEvents(true, { forward: true });
 
