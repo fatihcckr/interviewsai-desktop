@@ -587,7 +587,7 @@ window.autoSaveInterval = setInterval(async () => {
       const s = (seconds % 60).toString().padStart(2, '0');
       const duration = `${h}:${m}:${s}`;
       
-      const API_URL = 'http://localhost:5000';
+      const API_URL = 'https://interviewai-pro-production.up.railway.app';
       
       await fetch(`${API_URL}/api/sessions/${sessionId}`, {
         method: 'PUT',
@@ -638,7 +638,7 @@ window.autoSaveInterval = setInterval(async () => {
         messages.push({ role: 'user', content: questionText });
         
         const resumeString = sessionSettings?.selectedResume?.content || '';
-        const API_URL = 'http://localhost:5000/api/chat';
+        const API_URL = API_URL + '/api/chat'
         
         const response = await fetch(API_URL, {
           method: 'POST',
@@ -758,7 +758,7 @@ window.autoSaveInterval = setInterval(async () => {
         
         answerDiv.innerHTML = '<span class="placeholder">Analyzing...</span>';
         
-        const API_URL = 'http://localhost:5000/api/chat';
+        const API_URL = API_URL + '/api/chat';
         const response = await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -840,7 +840,7 @@ window.autoSaveInterval = setInterval(async () => {
           .join('\n\n');
         
         const duration = document.getElementById('timer').textContent;
-const API_URL = 'http://localhost:5000';
+const API_URL = 'API_URL';
         
         const response = await fetch(`${API_URL}/api/sessions/${sessionId}`, {
           method: 'PUT',
@@ -1036,7 +1036,7 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
         messages.push({ role: 'user', content: manualQuestion });
         
         const resumeString = sessionSettings?.selectedResume?.content || '';
-        const API_URL = 'http://localhost:5000/api/chat';
+        const API_URL = API_URL + '/api/chat';
         
         const response = await fetch(API_URL, {
           method: 'POST',
