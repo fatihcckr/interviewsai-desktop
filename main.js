@@ -104,10 +104,9 @@ if (match) {
             settings = JSON.parse(decodeURIComponent(encodedSettings));
             console.log('✅ Parsed Settings:', settings);
 
-// ===== API_URL'i EN BAŞTA tanımla =====
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://interviewai-pro-production.up.railway.app'
-  : 'http://localhost:5000';
+            const API_URL = app.isPackaged 
+            ? 'https://interviewai-pro-production.up.railway.app'
+            : 'http://localhost:5000';
 
 // ===== YENİ: Session start time'ı hesapla ve inject et =====
 let sessionStartTime = Date.now();
@@ -207,7 +206,7 @@ overlayWindow.webContents.executeJavaScript(`
               console.log('🔍 Resume has no content, fetching from backend...');
               
               try {
-                const response = await fetch(`${API_URL}/resumes/${settings.selectedResume.id}`);
+                const response = await fetch(`${API_URL}/api/resumes/${settings.selectedResume.id}`);
                 
                 if (response.ok) {
                   const resumeData = await response.json();
