@@ -3,14 +3,12 @@ name: Build Desktop App
 on:
   push:
     branches: [ main ]
-    tags:
-      - 'v*'  # ← YENİ: Tag push'larını dinle
   pull_request:
     branches: [ main ]
   workflow_dispatch:
 
 permissions:
-  contents: write  
+  contents: write
 
 jobs:
   build:
@@ -57,3 +55,57 @@ jobs:
         with:
           name: InterviewsAI-Windows
           path: dist/*.exe
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Download Mac artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: InterviewsAI-Mac
+          path: ./artifacts
+      
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: InterviewsAI-Windows
+          path: ./artifacts
+      
+      - name: Rename files
+        run: |
+          cd artifacts
+          mv *.dmg InterviewsAI-Mac.dmg || true
+          mv *.exe InterviewsAI-Windows.exe || true
+          ls -la
+      
+      - name: Delete old release
+        uses: dev-drprasad/delete-tag-and-release@v1.1
+        with:
+          tag_name: latest
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          delete_release: true
+        continue-on-error: true
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: InterviewAI Desktop (Latest)
+          body: |
+            🎉 **InterviewAI Desktop - Latest Build**
+            
+            Otomatik olarak oluşturulmuş en güncel sürüm.
+            
+            📥 **Downloads:**
+            - Windows: `InterviewsAI-Windows.exe`
+            - macOS: `InterviewsAI-Mac.dmg`
+          files: |
+            artifacts/InterviewsAI-Windows.exe
+            artifacts/InterviewsAI-Mac.dmg
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
