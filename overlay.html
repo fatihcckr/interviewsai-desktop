@@ -690,6 +690,7 @@ window.autoSaveInterval = setInterval(async () => {
         conversation.push({
           from: 'question_summary',
           text: questionText,
+          rawText: questionText,
           id: baseId
         });
         conversation.push({
@@ -838,7 +839,10 @@ window.autoSaveInterval = setInterval(async () => {
           .map(turn => turn.rawText.trim())
           .join('\n\n');
         
-        const duration = document.getElementById('timer').textContent;
+          const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+        const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        const duration = `${h}:${m}:${s}`;
         
         const response = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}`, {
           method: 'PUT',
@@ -1085,6 +1089,7 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
         conversation.push({
           from: 'question_summary',
           text: manualQuestion,
+          rawText: manualQuestion,
           id: baseId
         });
         conversation.push({
