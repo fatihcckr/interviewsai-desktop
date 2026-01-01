@@ -77,7 +77,10 @@ jobs:
       - name: Rename files
         run: |
           cd artifacts
-          mv *.dmg InterviewsAI-Mac.dmg || true
+          ls -la
+          # Rename DMG files for cleaner names
+          for f in *-x64.dmg; do [ -f "$f" ] && mv "$f" "InterviewsAI-Mac-Intel.dmg"; done
+          for f in *-arm64.dmg; do [ -f "$f" ] && mv "$f" "InterviewsAI-Mac-AppleSilicon.dmg"; done
           mv *.exe InterviewsAI-Windows.exe || true
           ls -la
       
@@ -101,11 +104,12 @@ jobs:
             
             📥 **Downloads:**
             - Windows: `InterviewsAI-Windows.exe`
-            - macOS: `InterviewsAI-Mac.dmg`
+            - macOS (Apple Silicon M1/M2/M3): `InterviewsAI-Mac-AppleSilicon.dmg`
+            - macOS (Intel): `InterviewsAI-Mac-Intel.dmg`
           files: |
             artifacts/InterviewsAI-Windows.exe
-            artifacts/InterviewsAI-Mac.dmg
+            artifacts/InterviewsAI-Mac-Intel.dmg
+            artifacts/InterviewsAI-Mac-AppleSilicon.dmg
           prerelease: false
-          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
