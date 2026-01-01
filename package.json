@@ -56,7 +56,7 @@
           "path": "/Applications"
         }
       ],
-      "artifactName": "InterviewsAI-Mac-${version}.${ext}"
+      "artifactName": "InterviewsAI-Mac-${version}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
