@@ -17,7 +17,7 @@ if (process.defaultApp) {
 function createLauncherWindow() {
   launcherWindow = new BrowserWindow({
     width: 420,
-    height: 320,
+    height: 370,
     resizable: false,
     frame: true,
     alwaysOnTop: true,
@@ -28,6 +28,7 @@ function createLauncherWindow() {
   });
 
   launcherWindow.loadFile('launcher.html');
+  // launcherWindow.webContents.openDevTools();  // ← ADD THIS LINE
   
   launcherWindow.on('closed', () => {
     launcherWindow = null;

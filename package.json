@@ -18,6 +18,7 @@
       "main.js",
       "preload.js",
       "overlay.html",
+      "launcher.html",
       "logo.png",
       "package.json"
     ],

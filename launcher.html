@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>InterviewsAI</title>
+  <title>Interviews AI</title>
   <style>
     * {
       margin: 0;
@@ -19,15 +19,28 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 56px 24px 56px 24px;
       text-align: center;
     }
 
-    .logo {
-      font-size: 24px;
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      margin-bottom: 20px;
+    }
+
+    .logo-container img {
+      width: 56px;
+      height: 56px;
+      margin-top: 6px;
+    }
+
+    .logo-text {
+      font-size: 26px;
       font-weight: 700;
-      margin-bottom: 24px;
       color: #3b82f6;
+      margin-left: -4px;
     }
 
     .title {
@@ -85,7 +98,10 @@
   </style>
 </head>
 <body>
-  <div class="logo">🎯 InterviewsAI</div>
+  <div class="logo-container">
+    <img src="logo.png" alt="InterviewsAI Logo">
+    <span class="logo-text">Interviews AI</span>
+  </div>
   
   <div class="title">This app launches from the website</div>
   
