@@ -1,8 +1,9 @@
-const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, shell } = require('electron');
 const path = require('path');
 
 let mainWindow;
 let overlayWindow;
+let launcherWindow;
 
 // Deep link protocol
 if (process.defaultApp) {
@@ -11,6 +12,26 @@ if (process.defaultApp) {
   }
 } else {
   app.setAsDefaultProtocolClient('interviewsai');
+}
+
+function createLauncherWindow() {
+  launcherWindow = new BrowserWindow({
+    width: 420,
+    height: 320,
+    resizable: false,
+    frame: true,
+    alwaysOnTop: true,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+  launcherWindow.loadFile('launcher.html');
+  
+  launcherWindow.on('closed', () => {
+    launcherWindow = null;
+  });
 }
 
 function createMainWindow(deepLinkUrl = null) {
@@ -82,6 +103,12 @@ overlayWindow.setAlwaysOnTop(true, 'screen-saver', 1);
 
 function handleDeepLink(url) {
   console.log('🔗 Deep link received:', url);
+  
+  // Launcher açıksa kapat
+  if (launcherWindow) {
+    launcherWindow.close();
+    launcherWindow = null;
+  }
   
   const match = url.match(/interviewsai:\/\/session\/([^?]+)(?:\?settings=(.+))?/);
 
@@ -347,15 +374,16 @@ app.whenReady().then(() => {
   // Keyboard shortcuts
   registerShortcuts();
   
-  // Deep link varsa işle, yoksa da overlay'i aç
+  // Deep link varsa işle, yoksa launcher aç
   if (url) {
     handleDeepLink(url);
+  } else {
+    createLauncherWindow();
   }
 
   app.on('activate', () => {
-    // Hiçbir pencere açık değilse, overlay aç
-    if (BrowserWindow.getAllWindows().length === 0 && !overlayWindow) {
-      // Deep link yoksa boş overlay aç (gerekirse)
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createLauncherWindow();
     }
   });
 });
@@ -454,5 +482,16 @@ ipcMain.handle('capture-screenshot', async () => {
   } catch (error) {
     console.error('❌ Failed to capture screenshot:', error);
     throw error;
+  }
+});
+
+// Launcher IPC handlers
+ipcMain.on('open-website', () => {
+  shell.openExternal('https://interviews-ai.com');
+});
+
+ipcMain.on('close-launcher', () => {
+  if (launcherWindow) {
+    launcherWindow.close();
   }
 });

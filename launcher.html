@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>InterviewsAI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: #3b82f6;
+    }
+
+    .title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #e5e7eb;
+    }
+
+    .steps {
+      text-align: left;
+      margin-bottom: 24px;
+      color: #9ca3af;
+      font-size: 14px;
+      line-height: 2;
+    }
+
+    .steps span {
+      color: #3b82f6;
+      font-weight: 600;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .btn-secondary {
+      background: #374151;
+      color: #e5e7eb;
+    }
+
+    .btn-secondary:hover {
+      background: #4b5563;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">🎯 InterviewsAI</div>
+  
+  <div class="title">This app launches from the website</div>
+  
+  <div class="steps">
+    <span>1.</span> Go to interviews-ai.com<br>
+    <span>2.</span> Start a new session<br>
+    <span>3.</span> Select "Desktop" option
+  </div>
+  
+  <div class="buttons">
+    <button class="btn btn-primary" id="openWebsite">Open Website</button>
+    <button class="btn btn-secondary" id="closeApp">Close</button>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    
+    document.getElementById('openWebsite').addEventListener('click', () => {
+      ipcRenderer.send('open-website');
+    });
+    
+    document.getElementById('closeApp').addEventListener('click', () => {
+      ipcRenderer.send('close-launcher');
+    });
+  </script>
+</body>
+</html>
