@@ -1,3 +1,12 @@
+// Sentry Error Tracking
+const Sentry = require('@sentry/electron/main');
+
+Sentry.init({
+  dsn: 'https://c2e9c612e8e71a318906eaeee12892d0@o4510644816904192.ingest.us.sentry.io/4510644821229568',
+  environment: 'production',
+  release: 'interviewsai-desktop@1.0.1'
+});
+
 const { app, BrowserWindow, globalShortcut, ipcMain, shell } = require('electron');
 const path = require('path');
 
@@ -199,6 +208,7 @@ try {
   }
 } catch (error) {
   console.error('❌ Session start error:', error);
+  Sentry.captureException(error);
 }
 
 // ===== Session data'yı inject et (YENİ ID ile!) =====
@@ -227,6 +237,7 @@ overlayWindow.webContents.executeJavaScript(`
               }
             } catch (error) {
               console.error('❌ Token fetch error:', error);
+              Sentry.captureException(error);
             }
             
             // ===== Resume'ü arka planda fetch et =====
@@ -258,6 +269,7 @@ overlayWindow.webContents.executeJavaScript(`
                 }
               } catch (error) {
                 console.error('❌ Error fetching resume:', error);
+                Sentry.captureException(error);
               }
             }
             
@@ -482,6 +494,7 @@ ipcMain.handle('capture-screenshot', async () => {
     
   } catch (error) {
     console.error('❌ Failed to capture screenshot:', error);
+    Sentry.captureException(error);
     throw error;
   }
 });

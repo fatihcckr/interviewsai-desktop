@@ -536,6 +536,15 @@
   </div>
 
     <script>
+
+    // Sentry Error Tracking for Renderer
+  const Sentry = require('@sentry/electron/renderer');
+
+  Sentry.init({
+    dsn: 'https://c2e9c612e8e71a318906eaeee12892d0@o4510644816904192.ingest.us.sentry.io/4510644821229568',
+    environment: 'production',
+    release: 'interviewsai-desktop@1.0.1'
+  });    
   // ===== DEĞİŞKEN TANIMLAMALARI (EN ÜSTTE OLMALI!) =====
   let accumulatedTranscript = '';
   let sessionSettings = null;
@@ -604,6 +613,7 @@ window.autoSaveInterval = setInterval(async () => {
       console.log('✅ Auto-saved at', duration);
     } catch (error) {
       console.error('❌ Auto-save failed:', error);
+      Sentry.captureException(error);
     }
   }
 }, 5000); 
@@ -702,9 +712,10 @@ window.autoSaveInterval = setInterval(async () => {
         refreshNavigation(); 
         
       } catch (error) {
-        console.error('❌ Generate answer error:', error);
-        answerDiv.innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
-      }
+  Sentry.captureException(error);
+  console.error('❌ Generate answer error:', error);
+  answerDiv.innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
+}
     });
 
     document.getElementById('analyzeScreenBtn').addEventListener('click', async () => {
@@ -809,9 +820,10 @@ window.autoSaveInterval = setInterval(async () => {
         refreshNavigation();
         
       } catch (error) {
-        console.error('❌ Screen analysis error:', error);
-        answerDiv.innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
-      } finally {
+  Sentry.captureException(error);
+  console.error('❌ Screen analysis error:', error);
+  answerDiv.innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
+} finally {
         setIsAnalyzing(false);
       }
     });
@@ -1101,6 +1113,7 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
         refreshNavigation();
         
       } catch (error) {
+        Sentry.captureException(error);
         console.error('❌ Manual message error:', error);
         answerDiv.innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
       }
@@ -1175,6 +1188,7 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
     });
 
     deepgramConnection.on(LiveTranscriptionEvents.Error, (err) => {
+      Sentry.captureException(err);
       console.error('❌ Deepgram error:', err);
     });
 
