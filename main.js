@@ -62,7 +62,7 @@ overlayWindow.setAlwaysOnTop(true, 'screen-saver', 1);
   
   // Screen capture'dan gizle (Windows)
   if (process.platform === 'win32') {
-    overlayWindow.setContentProtection(true);
+    overlayWindow.setContentProtection(false);
   }
 
   overlayWindow.setIgnoreMouseEvents(true, { forward: true });
