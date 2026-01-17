@@ -524,7 +524,7 @@
     </div>
 
     <div class="update-banner" id="updateBanner">
-      🚀 New version available! Click to download
+      🚀 New version available! Download from interviews-ai.com
     </div>
 
     <div class="listening-status">
@@ -611,12 +611,6 @@
 
   // Check for updates on load (with delay to not block startup)
   setTimeout(checkForUpdates, 3000);
-
-  // Update banner click handler
-  document.getElementById('updateBanner').addEventListener('click', () => {
-    const { shell } = require('electron');
-    shell.openExternal('https://github.com/fatihcckr/interviewsai-desktop/releases/latest');
-  });
 
   // ===== DEĞİŞKEN TANIMLAMALARI (EN ÜSTTE OLMALI!) =====
   let accumulatedTranscript = '';
