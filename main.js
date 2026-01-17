@@ -4,7 +4,7 @@ const Sentry = require('@sentry/electron/main');
 Sentry.init({
   dsn: 'https://c2e9c612e8e71a318906eaeee12892d0@o4510644816904192.ingest.us.sentry.io/4510644821229568',
   environment: 'production',
-  release: 'interviewsai-desktop@1.0.1'
+  release: 'interviewsai-desktop@1.0.2'
 });
 
 const { app, BrowserWindow, globalShortcut, ipcMain, shell } = require('electron');
@@ -134,16 +134,21 @@ if (match) {
     }
     
     const sendSessionData = async () => {
-      if (overlayWindow) {
-        let settings = null;
-        if (encodedSettings) {
-          try {
-            settings = JSON.parse(decodeURIComponent(encodedSettings));
-            console.log('✅ Parsed Settings:', settings);
+      // Guard: Check if overlay still exists
+      if (!overlayWindow || overlayWindow.isDestroyed()) {
+        console.log('⚠️ Overlay window closed, aborting sendSessionData');
+        return;
+      }
 
-            const API_URL = app.isPackaged 
-            ? 'https://interviewai-pro-production.up.railway.app'
-            : 'http://localhost:5000';
+      let settings = null;
+      if (encodedSettings) {
+        try {
+          settings = JSON.parse(decodeURIComponent(encodedSettings));
+          console.log('✅ Parsed Settings:', settings);
+
+          const API_URL = app.isPackaged
+          ? 'https://interviewai-pro-production.up.railway.app'
+          : 'http://localhost:5000';
 
 // ===== YENİ: Session start time'ı hesapla ve inject et =====
 let sessionStartTime = Date.now();
@@ -170,10 +175,16 @@ if (sessionId.startsWith('session-') && !sessionId.includes('temp') && userId) {
   }
 }
 
+// Guard check before injection
+if (!overlayWindow || overlayWindow.isDestroyed()) {
+  console.log('⚠️ Overlay closed before session time injection');
+  return;
+}
+
 overlayWindow.webContents.executeJavaScript(`
   window.sessionStartTime = ${sessionStartTime};
   console.log('⏱️ Session start time set:', ${sessionStartTime});
-`); 
+`);
 
 // ===== YENİ: Backend'e session başlat ve credit düşür =====
 console.log('💳 Starting session and deducting credit...');
@@ -212,70 +223,92 @@ try {
 }
 
 // ===== Session data'yı inject et (YENİ ID ile!) =====
+// Guard check before session data injection
+if (!overlayWindow || overlayWindow.isDestroyed()) {
+  console.log('⚠️ Overlay closed before session data injection');
+  return;
+}
+
 overlayWindow.webContents.executeJavaScript(`
   window.electronSessionId = '${sessionId}';
   window.electronSessionSettings = ${JSON.stringify(settings)};
   console.log('✅ Session data injected with ID: ${sessionId}');
 `);
+
+// ===== YENİ: Token'ı HEMEN al ve gönder =====
+console.log('🔑 Fetching Deepgram token immediately...');
+
+try {
+  const tokenResponse = await fetch(`${API_URL}/api/deepgram-token`, { method: 'POST' });
+
+  // Guard check AFTER async fetch (critical!)
+  if (!overlayWindow || overlayWindow.isDestroyed()) {
+    console.log('⚠️ Overlay closed while fetching token, aborting');
+    return;
+  }
+
+  if (tokenResponse.ok) {
+    const tokenData = await tokenResponse.json();
+    console.log('✅ Token received, sending to overlay...');
+
+    // Final guard check before sending token
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      overlayWindow.webContents.send('deepgram-token', {
+        token: tokenData.key,
+        language: settings.language || 'en-US'
+      });
+    }
+  } else {
+    console.error('❌ Failed to get token:', tokenResponse.status);
+  }
+} catch (error) {
+  console.error('❌ Token fetch error:', error);
+  Sentry.captureException(error);
+}
             
-            // ===== YENİ: Token'ı HEMEN al ve gönder =====
-            console.log('🔑 Fetching Deepgram token immediately...');
-                     
-            try {
-              const tokenResponse = await fetch(`${API_URL}/api/deepgram-token`, { method: 'POST' });
-              if (tokenResponse.ok) {
-                const tokenData = await tokenResponse.json();
-                console.log('✅ Token received, sending to overlay...');
-                
-                // Token'ı HEMEN gönder
-                overlayWindow.webContents.send('deepgram-token', {
-                  token: tokenData.key,
-                  language: settings.language || 'en-US'
-                });
-              } else {
-                console.error('❌ Failed to get token:', tokenResponse.status);
-              }
-            } catch (error) {
-              console.error('❌ Token fetch error:', error);
-              Sentry.captureException(error);
-            }
-            
-            // ===== Resume'ü arka planda fetch et =====
-            if (settings.selectedResume?.id && !settings.selectedResume.content) {
-              console.log('🔍 Resume has no content, fetching from backend...');
-              
-              try {
-                const response = await fetch(`${API_URL}/api/resumes/${settings.selectedResume.id}`);
-                
-                if (response.ok) {
-                  const resumeData = await response.json();
-                  settings.selectedResume = {
-                    id: resumeData.id,
-                    fileName: resumeData.file_name,
-                    content: resumeData.content,
-                    fileType: resumeData.file_type,
-                    fileSize: resumeData.file_size
-                  };
-                  console.log('✅ Resume loaded from backend:', resumeData.file_name);
-                  
-                  overlayWindow.webContents.executeJavaScript(`
-                    if (window.electronSessionSettings) {
-                      window.electronSessionSettings.selectedResume = ${JSON.stringify(settings.selectedResume)};
-                      console.log('✅ Resume content updated in overlay');
-                    }
-                  `);
-                } else {
-                  console.error('❌ Failed to fetch resume:', response.status);
-                }
-              } catch (error) {
-                console.error('❌ Error fetching resume:', error);
-                Sentry.captureException(error);
-              }
-            }
-            
-          } catch (error) {
-            console.error('❌ Failed to parse settings:', error);
+// ===== Resume'ü arka planda fetch et =====
+if (settings.selectedResume?.id && !settings.selectedResume.content) {
+  console.log('🔍 Resume has no content, fetching from backend...');
+
+  try {
+    const response = await fetch(`${API_URL}/api/resumes/${settings.selectedResume.id}`);
+
+    // Guard check after async fetch
+    if (!overlayWindow || overlayWindow.isDestroyed()) {
+      console.log('⚠️ Overlay closed while fetching resume');
+      return;
+    }
+
+    if (response.ok) {
+      const resumeData = await response.json();
+      settings.selectedResume = {
+        id: resumeData.id,
+        fileName: resumeData.file_name,
+        content: resumeData.content,
+        fileType: resumeData.file_type,
+        fileSize: resumeData.file_size
+      };
+      console.log('✅ Resume loaded from backend:', resumeData.file_name);
+
+      // Final guard check before injection
+      if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.webContents.executeJavaScript(`
+          if (window.electronSessionSettings) {
+            window.electronSessionSettings.selectedResume = ${JSON.stringify(settings.selectedResume)};
+            console.log('✅ Resume content updated in overlay');
           }
+        `);
+      }
+    } else {
+      console.error('❌ Failed to fetch resume:', response.status);
+    }
+          } catch (error) {
+            console.error('❌ Error fetching resume:', error);
+            Sentry.captureException(error);
+          }
+        }
+        } catch (error) {
+          console.error('❌ Failed to parse settings:', error);
         }
       }
     };

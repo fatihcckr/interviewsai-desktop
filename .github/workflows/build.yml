@@ -60,20 +60,27 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from package.json
+        id: version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
       - name: Download Mac artifact
         uses: actions/download-artifact@v4
         with:
           name: InterviewsAI-Mac
           path: ./artifacts
-      
+
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
           name: InterviewsAI-Windows
           path: ./artifacts
-      
+
       - name: Rename files
         run: |
           cd artifacts
@@ -83,29 +90,29 @@ jobs:
           for f in *-arm64.dmg; do [ -f "$f" ] && mv "$f" "InterviewsAI-Mac-AppleSilicon.dmg"; done
           mv *.exe InterviewsAI-Windows.exe || true
           ls -la
-      
-      - name: Delete old release
+
+      - name: Delete old latest release
         uses: dev-drprasad/delete-tag-and-release@v1.1
         with:
           tag_name: latest
           github_token: ${{ secrets.GITHUB_TOKEN }}
           delete_release: true
         continue-on-error: true
-      
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: latest
-          name: InterviewAI Desktop (Latest)
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: InterviewAI Desktop v${{ steps.version.outputs.VERSION }}
           body: |
-            🎉 **InterviewAI Desktop - Latest Build**
-            
-            Otomatik olarak oluşturulmuş en güncel sürüm.
-            
+            🎉 **InterviewAI Desktop v${{ steps.version.outputs.VERSION }}**
+
             📥 **Downloads:**
             - Windows: `InterviewsAI-Windows.exe`
             - macOS (Apple Silicon M1/M2/M3): `InterviewsAI-Mac-AppleSilicon.dmg`
             - macOS (Intel): `InterviewsAI-Mac-Intel.dmg`
+
+            🔄 Auto-update check is enabled in this version.
           files: |
             artifacts/InterviewsAI-Windows.exe
             artifacts/InterviewsAI-Mac-Intel.dmg

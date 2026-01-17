@@ -222,6 +222,27 @@
       animation: pulse 2s infinite;
     }
 
+    .update-banner {
+      display: none;
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+      padding: 8px 16px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-app-region: no-drag;
+    }
+
+    .update-banner:hover {
+      background: linear-gradient(90deg, #d97706, #b45309);
+    }
+
+    .update-banner.visible {
+      display: block;
+    }
+
     .actions {
       -webkit-app-region: no-drag;
       padding: 12px 16px;
@@ -502,6 +523,10 @@
       </div>
     </div>
 
+    <div class="update-banner" id="updateBanner" onclick="require('electron').shell.openExternal('https://github.com/fatihcckr/interviewsai-desktop/releases/latest')">
+      🚀 New version available! Click to download
+    </div>
+
     <div class="listening-status">
       <div class="listening-dot"></div>
       <span>Listening...</span>
@@ -543,8 +568,50 @@
   Sentry.init({
     dsn: 'https://c2e9c612e8e71a318906eaeee12892d0@o4510644816904192.ingest.us.sentry.io/4510644821229568',
     environment: 'production',
-    release: 'interviewsai-desktop@1.0.1'
-  });    
+    release: 'interviewsai-desktop@1.0.2'
+  });
+
+  // ===== VERSION CHECK =====
+  const CURRENT_VERSION = '1.0.2';
+
+  async function checkForUpdates() {
+    try {
+      const response = await fetch('https://api.github.com/repos/fatihcckr/interviewsai-desktop/releases/latest');
+      if (response.ok) {
+        const release = await response.json();
+        // Extract version from tag (e.g., "v1.0.3" -> "1.0.3" or "latest" -> skip)
+        const latestTag = release.tag_name || '';
+        const latestVersion = latestTag.replace(/^v/, '').replace('latest', '');
+
+        if (latestVersion && latestVersion !== CURRENT_VERSION) {
+          // Compare versions (simple string comparison works for semver)
+          const current = CURRENT_VERSION.split('.').map(Number);
+          const latest = latestVersion.split('.').map(Number);
+
+          let isNewer = false;
+          for (let i = 0; i < 3; i++) {
+            if ((latest[i] || 0) > (current[i] || 0)) {
+              isNewer = true;
+              break;
+            } else if ((latest[i] || 0) < (current[i] || 0)) {
+              break;
+            }
+          }
+
+          if (isNewer) {
+            console.log(`🚀 New version available: ${latestVersion} (current: ${CURRENT_VERSION})`);
+            document.getElementById('updateBanner').classList.add('visible');
+          }
+        }
+      }
+    } catch (error) {
+      console.log('Version check skipped:', error.message);
+    }
+  }
+
+  // Check for updates on load (with delay to not block startup)
+  setTimeout(checkForUpdates, 3000);
+
   // ===== DEĞİŞKEN TANIMLAMALARI (EN ÜSTTE OLMALI!) =====
   let accumulatedTranscript = '';
   let sessionSettings = null;
@@ -931,9 +998,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   setTimeout(() => {
     clearInterval(checkSessionIdInterval);
     if (!sessionId) {
-      console.error('❌ Session ID never arrived!');
+      console.error('❌ Session ID never arrived after 30s!');
     }
-  }, 10000);
+  }, 30000);
   
   const language = window.electronSessionSettings?.language || 'en-US';
   
@@ -979,9 +1046,9 @@ audioPreparationPromise = (async () => {
   setTimeout(() => {
     clearInterval(checkResumeInterval);
     if (!sessionSettings?.selectedResume?.content) {
-      console.error('❌ Resume data never arrived!');
+      console.error('❌ Resume data never arrived after 30s!');
     }
-  }, 10000);
+  }, 30000);
 });
 
     document.querySelector('.hide-btn').addEventListener('click', () => {
@@ -1137,74 +1204,136 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
     let systemSourceNode = null;
     let gainNodes = { mic: null, system: null };
 
-    require('electron').ipcRenderer.on('deepgram-token', async (event, data) => {
-  try {
-    // Audio hazır mı bekle
-    const audioReady = await audioPreparationPromise;
-    
-    if (!audioReady) {
-      throw new Error('Audio preparation failed');
+    // Retry mekanizması ile Deepgram bağlantısı
+    let deepgramRetryCount = 0;
+    const MAX_DEEPGRAM_RETRIES = 3;
+    const RETRY_DELAY_MS = 2000;
+    let currentToken = null;
+    let currentLanguage = null;
+
+    function connectToDeepgram() {
+      return new Promise((resolve, reject) => {
+        console.log(`🔄 Deepgram connection attempt ${deepgramRetryCount + 1}/${MAX_DEEPGRAM_RETRIES}...`);
+
+        const deepgram = createClient(currentToken);
+        deepgramConnection = deepgram.listen.live({
+          model: 'nova-2',
+          language: currentLanguage,
+          smart_format: true,
+          interim_results: true,
+        });
+
+        let connectionTimeout = setTimeout(() => {
+          console.error('❌ Deepgram connection timeout');
+          reject(new Error('Connection timeout'));
+        }, 10000); // 10 saniye timeout
+
+        deepgramConnection.on(LiveTranscriptionEvents.Open, async () => {
+          clearTimeout(connectionTimeout);
+          deepgramRetryCount = 0; // Reset retry count on success
+          isCapturing = true;
+          console.log('✅ Deepgram connected!');
+
+          try {
+            await startCombinedAudioFast();
+            console.log('✅ Recording started after Deepgram connected!');
+            resolve();
+          } catch (error) {
+            console.error('❌ Failed to start recording:', error);
+            reject(error);
+          }
+        });
+
+        deepgramConnection.on(LiveTranscriptionEvents.Transcript, (transcriptData) => {
+          const transcriptText = transcriptData.channel.alternatives[0].transcript;
+
+          if (transcriptText) {
+            const listeningStatusDiv = document.querySelector('.listening-status');
+            const listeningSpan = listeningStatusDiv.querySelector('span:last-child');
+
+            if (transcriptData.is_final) {
+              accumulatedTranscript += (accumulatedTranscript ? ' ' : '') + transcriptText;
+              listeningSpan.textContent = accumulatedTranscript;
+            } else {
+              listeningSpan.innerHTML = `${accumulatedTranscript}<span style="color: #9ca3af;">${accumulatedTranscript ? ' ' : ''}${transcriptText}</span>`;
+            }
+
+            listeningStatusDiv.scrollLeft = listeningStatusDiv.scrollWidth;
+          }
+        });
+
+        deepgramConnection.on(LiveTranscriptionEvents.Error, (err) => {
+          clearTimeout(connectionTimeout);
+          Sentry.captureException(err);
+          console.error('❌ Deepgram error:', err);
+          isCapturing = false;
+          reject(err);
+        });
+
+        deepgramConnection.on(LiveTranscriptionEvents.Close, () => {
+          isCapturing = false;
+          console.log('🔴 Deepgram closed');
+
+          const listeningStatusDiv = document.querySelector('.listening-status');
+          const listeningSpan = listeningStatusDiv.querySelector('span:last-child');
+          if (!listeningSpan.textContent.includes('Connection error') && !listeningSpan.textContent.includes('Retrying')) {
+            if (accumulatedTranscript === '') {
+              listeningSpan.innerHTML = `<span style="color: #9ca3af;">Listening stopped</span>`;
+            }
+          }
+        });
+      });
     }
-    
-    console.log('✅ Audio ready, starting Deepgram...');
-    
-    const deepgram = createClient(data.token);
-    deepgramConnection = deepgram.listen.live({
-      model: 'nova-2',
-      language: data.language,
-      smart_format: true,
-      interim_results: true,
-    });
 
-    deepgramConnection.on(LiveTranscriptionEvents.Open, async () => {  // ← async ekle
-      isCapturing = true;
-      console.log('✅ Deepgram connected!');
-      
-      // ===== YENİ: Deepgram OPEN olduktan SONRA recorder başlat =====
-      try {
-        await startCombinedAudioFast();
-        console.log('✅ Recording started after Deepgram connected!');
-      } catch (error) {
-        console.error('❌ Failed to start recording:', error);
-      }
-    });
+    async function connectWithRetry() {
+      const listeningStatusDiv = document.querySelector('.listening-status');
+      const listeningSpan = listeningStatusDiv.querySelector('span:last-child');
 
-    deepgramConnection.on(LiveTranscriptionEvents.Transcript, (transcriptData) => {
-      const transcriptText = transcriptData.channel.alternatives[0].transcript;
-      
-      if (transcriptText) {
-        const listeningStatusDiv = document.querySelector('.listening-status');
-        const listeningSpan = listeningStatusDiv.querySelector('span:last-child');
-        
-        if (transcriptData.is_final) {
-          accumulatedTranscript += (accumulatedTranscript ? ' ' : '') + transcriptText;
-          listeningSpan.textContent = accumulatedTranscript;
-        } else {
-          listeningSpan.innerHTML = `${accumulatedTranscript}<span style="color: #9ca3af;">${accumulatedTranscript ? ' ' : ''}${transcriptText}</span>`;
+      while (deepgramRetryCount < MAX_DEEPGRAM_RETRIES) {
+        try {
+          await connectToDeepgram();
+          return; // Success!
+        } catch (error) {
+          deepgramRetryCount++;
+          console.error(`❌ Deepgram attempt ${deepgramRetryCount} failed:`, error.message);
+
+          if (deepgramRetryCount < MAX_DEEPGRAM_RETRIES) {
+            listeningSpan.innerHTML = `<span style="color: #f59e0b;">Retrying connection (${deepgramRetryCount}/${MAX_DEEPGRAM_RETRIES})...</span>`;
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+          }
         }
-        
-        listeningStatusDiv.scrollLeft = listeningStatusDiv.scrollWidth;
+      }
+
+      // All retries failed
+      console.error('❌ All Deepgram connection attempts failed');
+      listeningSpan.innerHTML = `<span style="color: #ef4444;">Connection failed - check your internet and restart session</span>`;
+      Sentry.captureMessage('Deepgram connection failed after all retries');
+    }
+
+    require('electron').ipcRenderer.on('deepgram-token', async (event, data) => {
+      try {
+        // Audio hazır mı bekle
+        const audioReady = await audioPreparationPromise;
+
+        if (!audioReady) {
+          throw new Error('Audio preparation failed');
+        }
+
+        console.log('✅ Audio ready, starting Deepgram...');
+
+        // Store token for retry mechanism
+        currentToken = data.token;
+        currentLanguage = data.language;
+        deepgramRetryCount = 0;
+
+        // Connect with retry
+        await connectWithRetry();
+
+      } catch (error) {
+        console.error('Failed to start audio capture:', error);
+        Sentry.captureException(error);
       }
     });
-
-    deepgramConnection.on(LiveTranscriptionEvents.Error, (err) => {
-      Sentry.captureException(err);
-      console.error('❌ Deepgram error:', err);
-    });
-
-    deepgramConnection.on(LiveTranscriptionEvents.Close, () => {
-      isCapturing = false;
-      console.log('🔴 Deepgram closed');
-    });
-
-    // ===== ESKİ KODU KALDIR - artık OPEN event'inde başlatıyoruz =====
-    // await startCombinedAudioFast(); ← BU SATIRI SİL
-
-  } catch (error) {
-    console.error('Failed to start audio capture:', error);
-    alert('Failed to start audio: ' + error.message);
-  }
-});
 
 // YENİ FONKSİYON: Hazır audio ile hızlı başlatma
 async function startCombinedAudioFast() {
