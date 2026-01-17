@@ -1,6 +1,6 @@
 {
   "name": "interviewsai-desktop",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "productName": "InterviewsAI",
   "description": "InterviewsAI Desktop Overlay App",
   "main": "main.js",

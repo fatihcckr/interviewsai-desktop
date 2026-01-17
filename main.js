@@ -4,7 +4,7 @@ const Sentry = require('@sentry/electron/main');
 Sentry.init({
   dsn: 'https://c2e9c612e8e71a318906eaeee12892d0@o4510644816904192.ingest.us.sentry.io/4510644821229568',
   environment: 'production',
-  release: 'interviewsai-desktop@1.0.2'
+  release: 'interviewsai-desktop@1.0.3'
 });
 
 const { app, BrowserWindow, globalShortcut, ipcMain, shell } = require('electron');
