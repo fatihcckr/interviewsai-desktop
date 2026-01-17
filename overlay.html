@@ -523,7 +523,7 @@
       </div>
     </div>
 
-    <div class="update-banner" id="updateBanner" onclick="require('electron').shell.openExternal('https://github.com/fatihcckr/interviewsai-desktop/releases/latest')">
+    <div class="update-banner" id="updateBanner">
       🚀 New version available! Click to download
     </div>
 
@@ -611,6 +611,12 @@
 
   // Check for updates on load (with delay to not block startup)
   setTimeout(checkForUpdates, 3000);
+
+  // Update banner click handler
+  document.getElementById('updateBanner').addEventListener('click', () => {
+    const { shell } = require('electron');
+    shell.openExternal('https://github.com/fatihcckr/interviewsai-desktop/releases/latest');
+  });
 
   // ===== DEĞİŞKEN TANIMLAMALARI (EN ÜSTTE OLMALI!) =====
   let accumulatedTranscript = '';
