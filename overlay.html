@@ -620,6 +620,82 @@
   let isAnalyzing = false;
   const API_BASE_URL = 'https://interviewai-pro-production.up.railway.app';
 
+  // ===== WEB SPEECH API FALLBACK =====
+  let webSpeechRecognition = null;
+  let usingWebSpeech = false;
+
+  function startWebSpeechFallback(language = 'en-US') {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      console.error('❌ Web Speech API not supported');
+      listeningSpan.innerHTML = `<span style="color: #ef4444;">Speech recognition not available</span>`;
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    webSpeechRecognition = new SpeechRecognition();
+    webSpeechRecognition.continuous = true;
+    webSpeechRecognition.interimResults = true;
+    webSpeechRecognition.lang = language;
+
+    usingWebSpeech = true;
+    console.log('🎤 Starting Web Speech API fallback...');
+    listeningSpan.innerHTML = `<span style="color: #22c55e;">Using browser speech recognition</span>`;
+
+    let finalTranscript = '';
+
+    webSpeechRecognition.onresult = (event) => {
+      let interimTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + ' ';
+          accumulatedTranscript = finalTranscript.trim();
+          listeningSpan.textContent = accumulatedTranscript;
+        } else {
+          interimTranscript += transcript;
+          listeningSpan.innerHTML = `${finalTranscript}<span style="color: #9ca3af;">${interimTranscript}</span>`;
+        }
+      }
+    };
+
+    webSpeechRecognition.onerror = (event) => {
+      console.error('❌ Web Speech error:', event.error);
+      if (event.error === 'not-allowed') {
+        listeningSpan.innerHTML = `<span style="color: #ef4444;">Microphone access denied</span>`;
+      }
+    };
+
+    webSpeechRecognition.onend = () => {
+      // Auto-restart if still using Web Speech
+      if (usingWebSpeech && webSpeechRecognition) {
+        console.log('🔄 Restarting Web Speech...');
+        setTimeout(() => {
+          try {
+            webSpeechRecognition.start();
+          } catch (e) {
+            console.log('Web Speech restart failed:', e.message);
+          }
+        }, 100);
+      }
+    };
+
+    try {
+      webSpeechRecognition.start();
+      console.log('✅ Web Speech API started');
+    } catch (error) {
+      console.error('❌ Failed to start Web Speech:', error);
+    }
+  }
+
+  function stopWebSpeech() {
+    usingWebSpeech = false;
+    if (webSpeechRecognition) {
+      webSpeechRecognition.stop();
+      webSpeechRecognition = null;
+    }
+  }
+
   
   // ===== TIMER =====
   let seconds = 0;
@@ -1304,10 +1380,10 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
         }
       }
 
-      // All retries failed
-      console.error('❌ All Deepgram connection attempts failed');
-      listeningSpan.innerHTML = `<span style="color: #ef4444;">Connection failed - check your internet and restart session</span>`;
-      Sentry.captureMessage('Deepgram connection failed after all retries');
+      // All retries failed - try Web Speech API fallback
+      console.error('❌ All Deepgram connection attempts failed, switching to Web Speech API');
+      Sentry.captureMessage('Deepgram failed, using Web Speech fallback');
+      startWebSpeechFallback(currentLanguage || 'en-US');
     }
 
     require('electron').ipcRenderer.on('deepgram-token', async (event, data) => {
@@ -1490,6 +1566,9 @@ async function startCombinedAudioFast() {
         deepgramConnection.finish();
         deepgramConnection = null;
       }
+
+      // Stop Web Speech if active
+      stopWebSpeech();
 
       if (microphoneStream) {
         microphoneStream.getTracks().forEach(track => track.stop());
