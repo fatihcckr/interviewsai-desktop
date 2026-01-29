@@ -568,11 +568,11 @@
   Sentry.init({
     dsn: 'https://c2e9c612e8e71a318906eaeee12892d0@o4510644816904192.ingest.us.sentry.io/4510644821229568',
     environment: 'production',
-    release: 'interviewsai-desktop@1.0.6'
+    release: 'interviewsai-desktop@1.0.7'
   });
 
   // ===== VERSION CHECK =====
-  const CURRENT_VERSION = '1.0.6';
+  const CURRENT_VERSION = '1.0.7';
 
   async function checkForUpdates() {
     try {
@@ -625,9 +625,12 @@
   let usingWebSpeech = false;
 
   function startWebSpeechFallback(language = 'en-US') {
+    const listeningStatusDiv = document.querySelector('.listening-status');
+    const listeningSpan = listeningStatusDiv ? listeningStatusDiv.querySelector('span:last-child') : null;
+
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       console.error('❌ Web Speech API not supported');
-      listeningSpan.innerHTML = `<span style="color: #ef4444;">Speech recognition not available</span>`;
+      if (listeningSpan) listeningSpan.innerHTML = `<span style="color: #ef4444;">Speech recognition not available</span>`;
       return;
     }
 
@@ -639,7 +642,7 @@
 
     usingWebSpeech = true;
     console.log('🎤 Starting Web Speech API fallback...');
-    listeningSpan.innerHTML = `<span style="color: #22c55e;">Using browser speech recognition</span>`;
+    if (listeningSpan) listeningSpan.innerHTML = `<span style="color: #22c55e;">Using browser speech recognition</span>`;
 
     let finalTranscript = '';
 
@@ -651,17 +654,17 @@
         if (event.results[i].isFinal) {
           finalTranscript += transcript + ' ';
           accumulatedTranscript = finalTranscript.trim();
-          listeningSpan.textContent = accumulatedTranscript;
+          if (listeningSpan) listeningSpan.textContent = accumulatedTranscript;
         } else {
           interimTranscript += transcript;
-          listeningSpan.innerHTML = `${finalTranscript}<span style="color: #9ca3af;">${interimTranscript}</span>`;
+          if (listeningSpan) listeningSpan.innerHTML = `${finalTranscript}<span style="color: #9ca3af;">${interimTranscript}</span>`;
         }
       }
     };
 
     webSpeechRecognition.onerror = (event) => {
       console.error('❌ Web Speech error:', event.error);
-      if (event.error === 'not-allowed') {
+      if (event.error === 'not-allowed' && listeningSpan) {
         listeningSpan.innerHTML = `<span style="color: #ef4444;">Microphone access denied</span>`;
       }
     };
