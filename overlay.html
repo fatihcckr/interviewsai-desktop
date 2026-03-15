@@ -804,7 +804,7 @@ window.autoSaveInterval = setInterval(async () => {
             resumeString,
             interviewSessionId: sessionId,
             customPrompt: sessionSettings?.extraInstructions || '',
-            selectedModel: sessionSettings?.aiModel || 'claude-sonnet-4.5'
+            selectedModel: sessionSettings?.aiModel || 'claude-sonnet-4-6'
           })
         });
         
@@ -924,7 +924,7 @@ window.autoSaveInterval = setInterval(async () => {
             resumeString,
             interviewSessionId: sessionId,
             customPrompt: sessionSettings?.extraInstructions || '',
-            selectedModel: sessionSettings?.aiModel || 'claude-sonnet-4.5'
+            selectedModel: sessionSettings?.aiModel || 'claude-sonnet-4-6'
           })
         });
         
@@ -1205,7 +1205,7 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
             resumeString,
             interviewSessionId: sessionId,
             customPrompt: sessionSettings?.extraInstructions || '',
-            selectedModel: sessionSettings?.aiModel || 'claude-sonnet-4.5'
+            selectedModel: sessionSettings?.aiModel || 'claude-sonnet-4-6'
           })
         });
         
@@ -1296,8 +1296,8 @@ require('electron').ipcRenderer.on('analyze-screen', () => {
 
         const deepgram = createClient(currentToken);
         deepgramConnection = deepgram.listen.live({
-          model: 'nova-2',
-          language: currentLanguage,
+          model: 'nova-3',
+          language: currentLanguage.split('-')[0],
           smart_format: true,
           interim_results: true,
         });
